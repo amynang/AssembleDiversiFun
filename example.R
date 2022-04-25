@@ -107,16 +107,25 @@ show_fw(local_fws[[1]], title = "L-matrix model food web")
 show_fw(late_succession[[1]], title = "L-matrix model food web")
 
 
-# average pairwise similarity goes up
-similarity.jaccard(graph_from_adjacency_matrix(local_fws[[1]][3:62,3:62])) %>% 
-  na_if(., 0) %>% 
-  mean(na.rm = T)
-similarity.jaccard(graph_from_adjacency_matrix(late_succession[[1]][3:62,3:62])) %>% 
-  na_if(., 0) %>% 
-  mean(na.rm = T)
-
 # the sum of pairwise similarities goes down
 similarity.jaccard(graph_from_adjacency_matrix(local_fws[[1]][3:62,3:62])) %>% 
   sum()
 similarity.jaccard(graph_from_adjacency_matrix(late_succession[[1]][3:62,3:62])) %>% 
   sum()
+
+
+# average pairwise similarity goes down
+similarity.jaccard(graph_from_adjacency_matrix(local_fws[[1]][3:62,3:62])) %>% 
+  #na_if(., 0) %>% 
+  mean(na.rm = T)
+similarity.jaccard(graph_from_adjacency_matrix(late_succession[[1]][3:62,3:62])) %>% 
+  #na_if(., 0) %>% 
+  mean(na.rm = T)
+
+# average pairwise similarity of those species that are similar goes up!
+similarity.jaccard(graph_from_adjacency_matrix(local_fws[[1]][3:62,3:62])) %>% 
+  na_if(., 0) %>% 
+  mean(na.rm = T)
+similarity.jaccard(graph_from_adjacency_matrix(late_succession[[1]][3:62,3:62])) %>% 
+  na_if(., 0) %>% 
+  mean(na.rm = T)
