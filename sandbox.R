@@ -14,10 +14,10 @@ masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
 # create the L matrix
 L <- create_Lmatrix(masses, 
                     n_basal, 
-                    Ropt = 100, #3.98
+                    Ropt = 3.98, #100, #3.98
                     gamma = 2, 
                     th = 0.01)
-
+diag(L) = 0
 colnames(L) = c(paste0("broducer",sprintf("%04d", 1:n_basal)),
                 paste0("consumer",sprintf("%04d", 1:(n_species-n_basal)))
                 )
@@ -61,19 +61,19 @@ show_fw(fw, title = "L-matrix model food web")
 # 4 levels of producer diversity
 producer_diversity = c(2,4,8,16)
 # 4 levels of consumer diversity
-consumer_diversity = c(30,40,50,60)
+#consumer_diversity = c(30,40,50,60)
 # an empty list 
 local_fws = vector(mode = "list")
 
 # k iterations
 for (k in 1:10) { 
-  for (j in consumer_diversity) {
+  #for (j in consumer_diversity) {
     
     for (i in producer_diversity) {
       
       while(TRUE){ # while loop skips communities with isolated components
         # sample n=j local consumers from the regional pool
-        local_consumers = sample(colnames(fw)[(n_basal+1):n_species], j) %>% 
+        local_consumers = sample(colnames(fw)[(n_basal+1):n_species], 60) %>% 
           sort()
         # sample n=i local producers from the regional pool
         local_producers = sample(colnames(fw)[1:n_basal], i) %>% 
@@ -86,7 +86,7 @@ for (k in 1:10) {
       # subset the meta-fooweb to get the local foodweb
       local_fw = fw[c(local_producers, local_consumers),
                     c(local_producers, local_consumers)]
-      
+      #diag(local_fw) = 0
       # Do I need this?
       # try(
       #sp_resource <- resource_filtering(local_fw, fw, keep.n.basal = TRUE)
@@ -102,7 +102,7 @@ for (k in 1:10) {
       
       #show_graph(colnames(local_fw), fw)
     }
-  }
+  #}
 }
 gg = vector(mode = "numeric", length=length(local_fws))
 for (g in 1:length(local_fws)) {
@@ -119,7 +119,7 @@ for (m in 1:length(late_succession)) {
   sp_sim <- bride_of_similarity_filtering(colnames(local_fws[[m]]), 
                                           fw, 
                                           t = 0, 
-                                          max.iter = 100) %>% 
+                                          max.iter = 1000) %>% 
     sort()
   
   late_succession[[m]] <- fw[sp_sim,
@@ -136,8 +136,8 @@ for (m in 1:length(late_succession)) {
 beepr::beep(9)
 
 
-show_fw(local_fws[[5]], title = "L-matrix model food web")
-show_fw(late_succession[[5]], title = "L-matrix model food web")
+show_fw(local_fws[[4]], title = "L-matrix model food web")
+show_fw(late_succession[[4]], title = "L-matrix model food web")
 
 
 
