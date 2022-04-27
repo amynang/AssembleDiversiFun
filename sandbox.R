@@ -1,7 +1,7 @@
 library(tidyverse)
 library(assembly)
 library(ATNr)
-
+set.seed(321)
 # 1) define number of species, their body masses, and the structure of the
 # community
 n_species <- 1000
@@ -18,6 +18,15 @@ L <- create_Lmatrix(masses,
                     gamma = 2, 
                     th = 0.01)
 diag(L) = 0
+
+N  <-  length(L)/2                              # the number of random values to replace
+inds <- round ( runif(N, 1, length(L)) )   # draw random values from [1, length(L)]
+L[inds] <- 0                               # use the random values as indicies to L, for which to replace
+
+
+
+
+
 colnames(L) = c(paste0("broducer",sprintf("%04d", 1:n_basal)),
                 paste0("consumer",sprintf("%04d", 1:(n_species-n_basal)))
                 )
@@ -66,7 +75,7 @@ producer_diversity = c(2,4,8,16)
 local_fws = vector(mode = "list")
 
 # k iterations
-for (k in 1:10) { 
+for (k in 1:1000) { 
   #for (j in consumer_diversity) {
     
     for (i in producer_diversity) {
@@ -84,8 +93,8 @@ for (k in 1:10) {
       
 
       # subset the meta-fooweb to get the local foodweb
-      local_fw = fw[c(local_producers, local_consumers),
-                    c(local_producers, local_consumers)]
+      local_fw = L[c(local_producers, local_consumers),
+                   c(local_producers, local_consumers)]
       #diag(local_fw) = 0
       # Do I need this?
       # try(
@@ -98,7 +107,7 @@ for (k in 1:10) {
       # add that foodweb to the list
       local_fws[[length(local_fws) + 1]] = local_fw
       
-      show_fw(local_fw, title = "L-matrix model food web")
+      show_fw(vegan::decostand(local_fw,"pa"), title = "L-matrix model food web")
       
       #show_graph(colnames(local_fw), fw)
     }
@@ -114,33 +123,148 @@ length(which(gg>1))
 
 late_succession = vector(mode = "list", length = length(local_fws))
 
+# for (m in 1:length(late_succession)) { 
+#   
+#   sp_sim <- similarity_filtering(colnames(local_fws[[m]]), 
+#                                           fw, 
+#                                           t = 0, 
+#                                           max.iter = 100) %>% 
+#     sort()
+#   
+#   late_succession[[m]] <- L[sp_sim,
+#                             sp_sim]
+#   
+#   
+#   cat('\014')
+#   #cat(paste0(round((m/1600)*100), '%'))
+#   cat(paste0(m, '/160'))
+#   #Sys.sleep(.05)
+#   if (m == length(local_fws)) cat('- Done!')
+#   
+# }
+
 for (m in 1:length(late_succession)) { 
   
-  sp_sim <- bride_of_similarity_filtering(colnames(local_fws[[m]]), 
+  # this will give 0x0 matrices in case of error (isolated species or components)
+  sp_sim <- tryCatch(similarity_filtering(colnames(local_fws[[m]]), 
                                           fw, 
                                           t = 0, 
                                           max.iter = 1000) %>% 
-    sort()
+                       sort(),
+                     error = function(e) 0)
   
-  late_succession[[m]] <- fw[sp_sim,
-                             sp_sim]
+  late_succession[[m]] <- L[sp_sim,
+                            sp_sim]
   
   
   cat('\014')
   #cat(paste0(round((m/1600)*100), '%'))
-  cat(paste0(m, '/160'))
+  cat(paste0(m, '/', length(late_succession)))
   #Sys.sleep(.05)
   if (m == length(local_fws)) cat('- Done!')
   
 }
+
 beepr::beep(9)
 
 
-show_fw(local_fws[[4]], title = "L-matrix model food web")
-show_fw(late_succession[[4]], title = "L-matrix model food web")
+show_fw(vegan::decostand(local_fws[[15]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(late_succession[[15]],"pa"), title = "L-matrix model food web")
+
+
+# saveRDS(late_succession, file="late_succession.RData")
+# saveRDS(local_fws, file="local_fws.RData")
+# 
+# late_succession = readRDS("late_succession.RData")
+
+dims = vector(mode = "numeric", length(late_succession))
+
+for (i in 1:length(late_succession)) {
+  dims[i] = dim(late_succession[[i]])[1]
+}
+  
+
+model_unscaled_nuts <- create_model_Unscaled_nuts(62, 2, 2, 
+                                                  masses[which(colnames(L) %in% colnames(local_fws[[1]]))], 
+                                                  vegan::decostand(local_fws[[1]],"pa"))
+
+# for a model created by create_model_Unscaled_nuts():
+model_unscaled_nuts <- initialise_default_Unscaled_nuts(model_unscaled_nuts, 
+                                                        local_fws[[1]])
+model_unscaled_nuts$initialisations()
+
+
+biomasses <- masses[which(colnames(L) %in% colnames(local_fws[[1]]))] ^ -0.75 * 1e1 # starting biomasses
+biomasses <- append(runif(2, 20, 30), biomasses) # nutrient concentration
+# defining the desired integration time
+times <- seq(0, 1500, 1)
+sol <- lsoda_wrapper(times, biomasses, model_unscaled_nuts)
+plot_odeweb(sol, model_unscaled_nuts$nb_s)
+
+colnames(sol) = c("time",
+                   paste0("nut",1:2),
+                   paste0("plant",1:2),
+                   paste0("animal",1:60))
+
+dat = as.data.frame(sol) %>% pivot_longer(!time, 
+                                          names_to = "species", 
+                                          values_to = "biomass")
+dat$taxon = substr(dat$species, 1, 3)
+
+
+ggplot2::ggplot(dat, aes(x=time, 
+                         y=biomass, 
+                         color = taxon)) +
+  geom_point()
 
 
 
+
+model_unscaled_nuts <- create_model_Unscaled_nuts(62, 2, 2, 
+                                                  masses[which(colnames(L) %in% colnames(late_succession[[1]]))], 
+                                                  vegan::decostand(late_succession[[1]],"pa"))
+
+# for a model created by create_model_Unscaled_nuts():
+model_unscaled_nuts <- initialise_default_Unscaled_nuts(model_unscaled_nuts, 
+                                                        late_succession[[1]])
+model_unscaled_nuts$initialisations()
+
+
+biomasses <- masses[which(colnames(L) %in% colnames(late_succession[[1]]))] ^ -0.75 * 1e1 # starting biomasses
+biomasses <- append(runif(2, 20, 30), biomasses) # nutrient concentration
+# defining the desired integration time
+times <- seq(0, 1500, 1)
+sol <- lsoda_wrapper(times, biomasses, model_unscaled_nuts)
+plot_odeweb(sol, model_unscaled_nuts$nb_s)
+
+colnames(sol) = c("time",
+                  paste0("nut",1:2),
+                  paste0("plant",1:2),
+                  paste0("animal",1:60))
+
+dat = as.data.frame(sol) %>% pivot_longer(!time, 
+                                          names_to = "species", 
+                                          values_to = "biomass")
+dat$taxon = substr(dat$species, 1, 3)
+
+
+ggplot2::ggplot(dat, aes(x=time, 
+                         y=biomass, 
+                         color = taxon)) +
+  geom_point()
+
+
+
+
+# running simulations for the Schneider model
+sol <- deSolve::lsoda(
+  biomasses,
+  times,
+  function(t, y, params) {
+    return(list(params$ODE(y, t)))
+  },
+  model_unscaled_nuts
+)
 
 sp_sim <- similarity_filtering(colnames(local_fws[[65]]),
                                fw,
@@ -249,3 +373,16 @@ local_producers = sample(colnames(dum)[1:4], 2) %>%
 local_fw = fw[c(local_producers, local_consumers),
               c(local_producers, local_consumers)]
 sp_resource <- resource_filtering(local_fw, dum, keep.n.basal = TRUE)
+
+
+
+
+
+vec <- c(1,2,"3",4)
+inp <- list(1,2,"3",4)
+outp <- vector(mode = "list",4)
+for (i in 1:4) {
+  try(this <- 2 * inp[[i]])
+  outp[[i]] <- this
+}
+outp <- list(2,4,"Error in 2 * inp[[i]] : non-numeric argument to binary operator",8)
