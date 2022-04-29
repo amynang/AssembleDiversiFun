@@ -83,6 +83,12 @@ L[1:dim1, predat] = 0
 # the remaining 250 animals will be omnivorous
 omniv = setdiff(1:1000,c(1:dim1,herbiv,predat))
 
+N  <-  length(L)/5                              # the number of random values to replace
+inds <- round ( runif(N, 1, length(L)) )   # draw random values from [1, length(L)]
+L[inds] <- 0                               # use the random values as indicies to L, for which to replace
+
+
+
 show_fw(vegan::decostand(L,"pa"))
 
 # species names are 0000group000 where 0000 is the index of the species (relates to bodymass) group is
@@ -110,77 +116,102 @@ local_fws = vector(mode = "list")
 for (k in 1:1000) { 
   #for (j in consumer_diversity) {
   
-  for (i in producer_diversity*3) {
+  for (i in producer_diversity) {
     
     while(TRUE){ # while loop skips communities with isolated components
       # sample n=j local consumers from the regional pool
-      local_consumers = sample(colnames(fw)[(n_basal+1):n_species], 100) %>% 
+      local_consumers = sample(colnames(fw)[(n_basal+1):n_species], 60) %>% 
         sort()
       # sample n=i local producers from the regional pool
       local_producers = sample(colnames(fw)[1:n_basal], i) %>% 
         sort()
       # if the number of components is 1, we are good to proceed
-      if(assembly:::.components(c(local_producers,local_consumers), fw) == 1) break()
+      if(assembly:::.components(c(local_producers,local_consumers), fw) == 1 &
+         length(assembly:::.find_isolated(c(local_producers,local_consumers), fw)) == 0
+         ) break()
     }
     
     
     # subset the meta-fooweb to get the local foodweb
     local_fw = L[c(local_producers, local_consumers),
                  c(local_producers, local_consumers)]
-    #diag(local_fw) = 0
-    # Do I need this?
-    # try(
-    #sp_resource <- resource_filtering(local_fw, fw, keep.n.basal = TRUE)
-    #   )
-    # 
-    # local_fw = fw[sp_resource,
-    #               sp_resource]
-    
-    # add that foodweb to the list
+    # add it to the list
     local_fws[[length(local_fws) + 1]] = local_fw
     
-    show_fw(vegan::decostand(local_fw,"pa"), title = "L-matrix model food web")
+    
+    
+    
+    #show_fw(vegan::decostand(local_fw,"pa"), title = "L-matrix model food web")
     
     #show_graph(colnames(local_fw), fw)
   }
   #}
 }
-gg = vector(mode = "numeric", length=length(local_fws))
-for (g in 1:length(local_fws)) {
-  gg[g] = assembly:::.components(colnames(local_fws[[g]]), fw)
-}
-length(which(gg>1))
-
+# gg = vector(mode = "numeric", length=length(local_fws))
+# for (g in 1:length(local_fws)) {
+#   gg[g] = assembly:::.components(colnames(local_fws[[g]]), fw)
+# }
+# length(which(gg>1))
+# 
+# 
+# late_succession = vector(mode = "list", length = length(local_fws))
+# 
+# for (m in 1:length(late_succession)) { 
+#   counter = 0
+#   while(TRUE) { 
+#     
+#     # this will give 0x0 matrices in case of error (isolated species or components)
+#     sp_sim <- tryCatch(bride_of_similarity_filtering(colnames(local_fws[[m]]), 
+#                                             fw, 
+#                                             t = .1, 
+#                                             max.iter = 500) %>% 
+#                          sort(),
+#                        error = function(e) 0)
+#     
+#     late_succession[[m]] <- L[sp_sim,
+#                               sp_sim]
+#     counter <- counter+1
+#     if(dim(late_succession[[m]])[1]!=0 | counter==5
+#        ) break()
+#   }
+#   
+#   
+#   cat('\014')
+#   #cat(paste0(round((m/1600)*100), '%'))
+#   cat(paste0(m, '/', length(late_succession)))
+#   #Sys.sleep(.05)
+#   if (m == length(local_fws)) cat('- Done!')
+#   
+# }
 
 late_succession = vector(mode = "list", length = length(local_fws))
-
 for (m in 1:length(late_succession)) { 
-  counter = 0
-  while(TRUE) { 
-    
-    # this will give 0x0 matrices in case of error (isolated species or components)
-    sp_sim <- tryCatch(similarity_filtering(colnames(local_fws[[m]]), 
-                                            fw, 
-                                            t = .01, 
-                                            max.iter = 500) %>% 
-                         sort(),
-                       error = function(e) 0)
-    
-    late_succession[[m]] <- L[sp_sim,
-                              sp_sim]
-    counter <- counter+1
-    if(dim(late_succession[[m]])[1]!=0 | counter==5
-       ) break()
-  }
   
+  sp_sim <- bride_of_similarity_filtering(colnames(local_fws[[m]]), 
+                                                   fw, 
+                                                   t = .1, 
+                                                   max.iter = 500) %>% 
+                       sort()
   
-  cat('\014')
+  late_succession[[m]] <- L[sp_sim,
+                            sp_sim]
+  
+  #cat('\014')
   #cat(paste0(round((m/1600)*100), '%'))
   cat(paste0(m, '/', length(late_succession)))
   #Sys.sleep(.05)
   if (m == length(local_fws)) cat('- Done!')
   
 }
+
+gg = vector(mode = "numeric", length=length(local_fws))
+for (g in 1:length(local_fws)) {
+  gg[g] = assembly:::.components(colnames(late_succession[[g]]), fw)
+}
+length(which(gg>1))
+
+
+
 dims = vector(mode = "numeric", length(late_succession))
 for (i in 1:length(late_succession)) {
   dims[i] = dim(late_succession[[i]])[1]
@@ -188,5 +219,78 @@ for (i in 1:length(late_succession)) {
 table(dims) 
 
 
-show_fw(vegan::decostand(local_fws[[15]],"pa"), title = "L-matrix model food web")
-show_fw(vegan::decostand(late_succession[[15]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(local_fws[[17]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(late_succession[[17]],"pa"), title = "L-matrix model food web")
+
+
+
+
+
+
+
+
+bride_of_similarity_filtering <- function (sp.names, metaweb, t = 0, 
+                                           method = "jaccard", stat = "mean", 
+                                           max.iter = 1000) {
+  if (t == 0) 
+    message("Temperature 't' = 0; this is a purely deterministic filtering")
+  isolated <- assembly:::.find_isolated(sp.names, metaweb)
+  if (length(isolated) > 0)
+    stop("Isolated species detected in input")
+  new_sp <- sp.names
+  for (i in seq_len(max.iter)) new_sp <- moov(new_sp, metaweb, 
+                                               t, method, stat)
+  if (length(sp.names) != length(new_sp)) {
+    stop("Number of species changed")
+  }
+  isolated <- assembly:::.find_isolated(new_sp, metaweb)
+  print(isolated)
+  # if (length(isolated) > 0) 
+  #   stop("Isolated species detected in output")
+  if (assembly:::.components(new_sp, metaweb) > 1) 
+    warning("Isolated component detected in output")
+  return(new_sp)
+}
+
+
+moov <- function (sp.names, metaweb, t = 0, method = "jaccard", stat = "mean") 
+{
+  g <- graph_from_adjacency_matrix(metaweb[sp.names, sp.names])
+  consumers <- intersect(sp.names, assembly:::.consumers(metaweb))
+  simil <- similarity(g, vids = which(sp.names %in% consumers), 
+                      method = method, mode = "all")
+  diag(simil) <- NA
+  prob_removed <- apply(simil, MARGIN = 2, stat, na.rm = TRUE)
+  
+  while(TRUE) { 
+  remove <- sample(consumers, size = 1, prob = prob_removed)
+  repl <- assembly:::.find_replacements(sp.names, remove, metaweb, keep.n.basal = TRUE)
+  new.sp <- union(setdiff(sp.names, remove), repl)
+  if(assembly:::.components(new.sp, metaweb)==1 &
+     length(assembly:::.find_isolated(new.sp, metaweb)) == 0 ) break()
+  }
+#  if (length(.find_isolated(new.sp, metaweb) > 0)) 
+#    return(sp.names)
+  new.g <- graph_from_adjacency_matrix(metaweb[new.sp, new.sp])
+  consumers <- intersect(new.sp, assembly:::.consumers(metaweb))
+  new.simil <- similarity(new.g, vids = which(new.sp %in% 
+                                                consumers), method = method, mode = "all")
+  diag(new.simil) <- NA
+  if (stat == "mean") {
+    simil <- mean(simil, na.rm = TRUE)
+    new.simil <- mean(new.simil, na.rm = TRUE)
+  }
+  else if (stat == "sum") {
+    simil <- sum(simil, na.rm = TRUE)
+    new.simil <- sum(new.simil, na.rm = TRUE)
+  }
+  else {
+    stop("'stat' must be one of c('mean', 'sum')")
+  }
+  if (assembly::metropolis.hastings(simil, new.simil, t = t)) {
+    return(new.sp)
+  }
+  else {
+    return(sp.names)
+  }
+}
