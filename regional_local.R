@@ -16,11 +16,11 @@ show_fw <- function(mat, title = NULL) {
 }
 
 
-# specify number of plants and animals
+# specify number of plants and plant consumers (herbivores & omnivores)
 dim1 = 250
-dim2 = 750
+dim2 = 500
 
-# quick and dirty way for nested plant-herbivore interactions
+# quick & dirty way for nested plant-consumer interactions
 # create a dataframe to generate nestedness
 dum = data.frame(row = rep(1:dim1,dim2),
                  col = rep(1:dim2,each = dim1))
@@ -39,65 +39,87 @@ for (i in 1:(dim1*dim2)) {
 }
 image(drum)
 
-# shuffle herbivores so that later on this pattern will be unrelated to bodymasses
+# shuffle them so that later on, this pattern will be unrelated to bodymasses
 rand <- sample(ncol(drum))
 #rand
 drum = drum[,rand]
 
 # create the interaction matrix
-L = matrix(NA,dim1+dim2,dim1+dim2)
+L = matrix(0,1000,1000)
 # plants don't eat anything
 L[,1:dim1] = 0
-# put in the herbivory
-L[1:dim1,(dim1+1):(dim1+dim2)] = drum#[dim(drum)[1]:1, ]
 
-n_species <- dim1+dim2
+# randomly select 2/3 of animals to be plant consumers (incl. omnivores)
+plant.cons = sample((dim1+1):1000, 500) %>% sort()
+
+# put in the herbivory
+L[1:dim1,plant.cons] = drum#[dim(drum)[1]:1, ]
+
+n_species <- dim1+dim2+250
 n_basal <- dim1
-#n_nut <- 16
+
 # body mass of species
 masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
                  sort(runif(n_species - n_basal, 2, 9)))
-# 2) create the food web
-# create the L matrix
+
+# create the allometric matrix
 K <- create_Lmatrix(masses, 
                     n_basal, 
                     Ropt = 3.98, #100, #3.98
                     gamma = 2, 
                     th = 0.01)
 # predatory links are allometric
-L[(dim1+1):(dim1+dim2), ] = K[(dim1+1):(dim1+dim2), ]
+L[(dim1+1):n_species, ] = K[(dim1+1):n_species, ]
 
 # remove cannibalism
 diag(L) = 0
 
-# select random subest of consumers to be herbivores
-herbiv = sample((dim1+1):(dim1+dim2), 250)
-# convert them to veganism
-L[(dim1+1):(dim1+dim2), herbiv] = 0
+# what = vector(mode = "logical",500)
+# prob = colSums(vegan::decostand(L[1:dim1,plant.cons],"pa"))/250
+# for (i in 1:500) { 
+# what[i] = sample(c("herbivore","omnivore"),1,prob[i])
+# }
+# which
 
-# select a different random subset of consumers to be predators
-predat = sample(setdiff((dim1+1):(dim1+dim2), herbiv), 250)
-# make them only eat meat
-L[1:dim1, predat] = 0
+# split plant consumers to herbivores and omnivores
+for (i in plant.cons) { 
+  # the more generalist a plant consumer is, the more likely to be an omnivore
+  L[(dim1+1):n_species, i] = L[(dim1+1):n_species, i]*(1-rbernoulli(1, sum(vegan::decostand(L[1:dim1,i],"pa"))/250))
+}
+# get the column indices of herbivores, omnivores, predators
+herbiv = setdiff(which(colSums(L[(dim1+1):n_species, ]) == 0),1:dim1)
+omniv  = setdiff(plant.cons, herbiv)
+predat = setdiff((dim1+1):n_species, plant.cons)
 
-# the remaining 250 animals will be omnivorous
-omniv = setdiff(1:1000,c(1:dim1,herbiv,predat))
+# # select random subest of consumers to be herbivores
+# herbiv = sample((dim1+1):(dim1+dim2), 250)
+# # convert them to veganism
+# L[(dim1+1):(dim1+dim2), herbiv] = 0
+# 
+# # select a different random subset of consumers to be predators
+# predat = sample(setdiff((dim1+1):(dim1+dim2), herbiv), 250)
+# # make them only eat meat
+# L[1:dim1, predat] = 0
+# 
+# # the remaining 250 animals will be omnivorous
+# omniv = setdiff(1:1000,c(1:dim1,herbiv,predat))
 
+# make the interaction matrix sparser
 N  <-  length(L)/5                              # the number of random values to replace
 inds <- round ( runif(N, 1, length(L)) )   # draw random values from [1, length(L)]
 L[inds] <- 0                               # use the random values as indicies to L, for which to replace
 
 
-
+# marvel at the glory of your creation
 show_fw(vegan::decostand(L,"pa"))
 
 # species names are 0000group000 where 0000 is the index of the species (relates to bodymass) group is
 # plants,herbivores,omnivores,predators and 000 is the within group index
 L = as.data.frame(L) %>%  rename_with(.cols = 1:dim1, ~c(paste0("_plant",sprintf("%03d", 1:250)))) %>% 
-                          rename_with(.cols = sort(herbiv), ~c(paste0("_herbiv",sprintf("%03d", 1:250)))) %>% 
-                          rename_with(.cols = sort(predat), ~c(paste0("_predat",sprintf("%03d", 1:250)))) %>% 
-                          rename_with(.cols = sort(omniv), ~c(paste0("_omniv",sprintf("%03d", 1:250)))) %>% 
-                          rename_with(.cols = 1:1000, ~c(paste0(sprintf("%04d", 1:1000), .)))
+  rename_with(.cols = sort(herbiv), ~c(paste0("_herbiv",sprintf("%03d", 1:length(herbiv))))) %>% 
+  rename_with(.cols = sort(predat), ~c(paste0("_predat",sprintf("%03d", 1:length(predat))))) %>% 
+  rename_with(.cols = sort(omniv), ~c(paste0("_omniv",sprintf("%03d", 1:length(omniv))))) %>% 
+  rename_with(.cols = 1:1000, ~c(paste0(sprintf("%04d", 1:1000), .)))
 rownames(L) = colnames(L)
 
 L = as.matrix(L)
@@ -128,7 +150,7 @@ for (k in 1:1000) {
       # if the number of components is 1, we are good to proceed
       if(assembly:::.components(c(local_producers,local_consumers), fw) == 1 &
          length(assembly:::.find_isolated(c(local_producers,local_consumers), fw)) == 0
-         ) break()
+      ) break()
     }
     
     
@@ -188,15 +210,15 @@ late_succession = vector(mode = "list", length = length(local_fws))
 for (m in 1:length(late_succession)) { 
   
   sp_sim <- bride_of_similarity_filtering(colnames(local_fws[[m]]), 
-                                                   fw, 
-                                                   t = .1, 
-                                                   max.iter = 500) %>% 
-                       sort()
+                                          fw, 
+                                          t = .1, 
+                                          max.iter = 500) %>% 
+    sort()
   
   late_succession[[m]] <- L[sp_sim,
                             sp_sim]
   
-  #cat('\014')
+  cat('\014')
   #cat(paste0(round((m/1600)*100), '%'))
   cat(paste0(m, '/', length(late_succession)))
   #Sys.sleep(.05)
@@ -219,8 +241,8 @@ for (i in 1:length(late_succession)) {
 table(dims) 
 
 
-show_fw(vegan::decostand(local_fws[[17]],"pa"), title = "L-matrix model food web")
-show_fw(vegan::decostand(late_succession[[17]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(local_fws[[1]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(late_succession[[1]],"pa"), title = "L-matrix model food web")
 
 
 
@@ -239,7 +261,7 @@ bride_of_similarity_filtering <- function (sp.names, metaweb, t = 0,
     stop("Isolated species detected in input")
   new_sp <- sp.names
   for (i in seq_len(max.iter)) new_sp <- moov(new_sp, metaweb, 
-                                               t, method, stat)
+                                              t, method, stat)
   if (length(sp.names) != length(new_sp)) {
     stop("Number of species changed")
   }
@@ -263,14 +285,14 @@ moov <- function (sp.names, metaweb, t = 0, method = "jaccard", stat = "mean")
   prob_removed <- apply(simil, MARGIN = 2, stat, na.rm = TRUE)
   
   while(TRUE) { 
-  remove <- sample(consumers, size = 1, prob = prob_removed)
-  repl <- assembly:::.find_replacements(sp.names, remove, metaweb, keep.n.basal = TRUE)
-  new.sp <- union(setdiff(sp.names, remove), repl)
-  if(assembly:::.components(new.sp, metaweb)==1 &
-     length(assembly:::.find_isolated(new.sp, metaweb)) == 0 ) break()
+    remove <- sample(consumers, size = 1, prob = prob_removed)
+    repl <- assembly:::.find_replacements(sp.names, remove, metaweb, keep.n.basal = TRUE)
+    new.sp <- union(setdiff(sp.names, remove), repl)
+    if(assembly:::.components(new.sp, metaweb)==1 &
+       length(assembly:::.find_isolated(new.sp, metaweb)) == 0 ) break()
   }
-#  if (length(.find_isolated(new.sp, metaweb) > 0)) 
-#    return(sp.names)
+  #  if (length(.find_isolated(new.sp, metaweb) > 0)) 
+  #    return(sp.names)
   new.g <- graph_from_adjacency_matrix(metaweb[new.sp, new.sp])
   consumers <- intersect(new.sp, assembly:::.consumers(metaweb))
   new.simil <- similarity(new.g, vids = which(new.sp %in% 
