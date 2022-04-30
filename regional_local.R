@@ -104,14 +104,17 @@ predat = setdiff((dim1+1):n_species, plant.cons)
 # # the remaining 250 animals will be omnivorous
 # omniv = setdiff(1:1000,c(1:dim1,herbiv,predat))
 
-# make the interaction matrix sparser
-N  <-  length(L)/5                              # the number of random values to replace
-inds <- round ( runif(N, 1, length(L)) )   # draw random values from [1, length(L)]
-L[inds] <- 0                               # use the random values as indicies to L, for which to replace
-
-
+#make the interaction matrix sparser (removing 50% of the interactions)
+# the indices of non-zero cells
+inds = which(L!=0)
+# turn those cells to 0 with a probability 50%
+L[inds] = as.integer(rbernoulli(length(inds),.5))*L[inds]
+# check that consumers still have some resources
+colSums(vegan::decostand(L[,(dim1+1):1000],"pa"))
+min(colSums(vegan::decostand(L[,(dim1+1):1000],"pa")))
 # marvel at the glory of your creation
 show_fw(vegan::decostand(L,"pa"))
+
 
 # species names are 0000group000 where 0000 is the index of the species (relates to bodymass) group is
 # plants,herbivores,omnivores,predators and 000 is the within group index
