@@ -59,8 +59,12 @@ n_species <- dim1+dim2+250
 n_basal <- dim1
 
 # body mass of species
-masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
-                 sort(runif(n_species - n_basal, 2, 9)))
+# masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
+#                  sort(runif(n_species - n_basal, 2, 9)))
+
+masses <- 10 ^ c(sort(runif(n_basal, -9, -3)),
+                 sort(runif(n_species - n_basal, -9, 3)))
+
 
 # create the allometric matrix
 K <- create_Lmatrix(masses, 
@@ -104,16 +108,19 @@ predat = setdiff((dim1+1):n_species, plant.cons)
 # # the remaining 250 animals will be omnivorous
 # omniv = setdiff(1:1000,c(1:dim1,herbiv,predat))
 
-#make the interaction matrix sparser (removing 50% of the interactions)
+#make the interaction matrix sparser (removing 30% of the interactions)
 # the indices of non-zero cells
 inds = which(L!=0)
-# turn those cells to 0 with a probability 50%
-L[inds] = as.integer(rbernoulli(length(inds),.5))*L[inds]
+# turn those cells to 0 with a probability 30%
+L[inds] = as.integer(rbernoulli(length(inds),.7))*L[inds]
 # check that consumers still have some resources
 colSums(vegan::decostand(L[,(dim1+1):1000],"pa"))
 min(colSums(vegan::decostand(L[,(dim1+1):1000],"pa")))
 # marvel at the glory of your creation
 show_fw(vegan::decostand(L,"pa"))
+
+
+
 
 
 # species names are 0000group000 where 0000 is the index of the species (relates to bodymass) group is
@@ -126,6 +133,10 @@ L = as.data.frame(L) %>%  rename_with(.cols = 1:dim1, ~c(paste0("_plant",sprintf
 rownames(L) = colnames(L)
 
 L = as.matrix(L)
+
+heatweb(L)
+
+
 
 # create the 0/1 version of the food web
 fw <- L
@@ -170,7 +181,11 @@ for (k in 1:1000) {
     
     #show_graph(colnames(local_fw), fw)
   }
-  #}
+  cat('\014')
+  #cat(paste0(round((m/1600)*100), '%'))
+  cat(paste0(k, '/', 4000))
+  #Sys.sleep(.05)
+  if (k == 4000) cat('- Done!')
 }
 # gg = vector(mode = "numeric", length=length(local_fws))
 # for (g in 1:length(local_fws)) {
@@ -244,14 +259,35 @@ for (i in 1:length(late_succession)) {
 table(dims) 
 
 
-show_fw(vegan::decostand(local_fws[[1]],"pa"), title = "L-matrix model food web")
-show_fw(vegan::decostand(late_succession[[1]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(local_fws[[1000]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(late_succession[[1000]],"pa"), title = "L-matrix model food web")
 
 
 
+# saveRDS(late_succession, file="late_succession20220430.RData")
+# saveRDS(local_fws, file="local_fws20220430.RData")
 
-
-
+heatweb <- function(mat) {
+  heat <- mat %>% #na_if(., 0) %>% 
+    as.data.frame() %>%
+    rownames_to_column("id") %>%
+    pivot_longer(-c(id), names_to = "species", values_to = "strength") %>%
+    mutate(species= fct_relevel(species,colnames(mat))) %>%
+    ggplot(aes(x=species, y=ordered(id, levels = rev(unique(id))), fill=strength)) + 
+    geom_raster() +
+    #theme_bw() +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          legend.position = "none") +
+    #scico::scale_fill_scico(palette = "lajolla")
+    #scale_fill_distiller(palette = "Spectral", direction = -1)
+    scale_fill_viridis_c(option = "inferno", direction = -1)
+  return(heat)
+}
 
 
 bride_of_similarity_filtering <- function (sp.names, metaweb, t = 0, 
