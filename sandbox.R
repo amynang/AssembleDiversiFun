@@ -376,13 +376,103 @@ sp_resource <- resource_filtering(local_fw, dum, keep.n.basal = TRUE)
 
 
 
+##### Trait based assembly #####
+sp = 5
+tr = 3
+trait.mat = matrix(rnorm(sp*tr,0,1), sp, tr, byrow = T)
+hist(trait.mat[,1])
+
+vegan::vegdist(trait.mat)
+ecodist::distance(trait.mat)
 
 
-vec <- c(1,2,"3",4)
-inp <- list(1,2,"3",4)
-outp <- vector(mode = "list",4)
-for (i in 1:4) {
-  try(this <- 2 * inp[[i]])
-  outp[[i]] <- this
+
+# body mass of species
+masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
+                 sort(runif(n_species - n_basal, 2, 9)))
+masses <- sort(rtgamma(1e3, 1, scale=2, a=0, b=10))*10
+
+# 2) create the food web
+# create the L matrix
+L <- create_Lmatrix(masses, 
+                    0, 
+                    Ropt = 3.98, #100, #3.98
+                    gamma = 2, 
+                    th = 0)
+
+L <- create_matrix(masses, 
+                   0, 
+                   Ropt = 3.98, #100, #3.98
+                   gamma = 2, 
+                   th = 0)
+
+rownames(L) = colnames(L) = paste0("sp",1:length(masses))
+
+#show_fw(vegan::decostand(L,"pa"))
+heatweb(L)
+
+
+heatweb <- function(mat) {
+  heat <- mat %>% #na_if(., 0) %>% 
+    as.data.frame() %>%
+    rownames_to_column("id") %>%
+    pivot_longer(-c(id), names_to = "species", values_to = "strength") %>%
+    mutate(species= fct_relevel(species,colnames(mat))) %>%
+    ggplot(aes(x=species, y=ordered(id, levels = rev(unique(id))), fill=strength)) + 
+    geom_raster() +
+    #theme_bw() +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          legend.position = "none") +
+    #scico::scale_fill_scico(palette = "lajolla")
+    #scale_fill_distiller(palette = "Spectral", direction = -1)
+    scale_fill_viridis_c(option = "inferno", direction = -1)
+  return(heat)
 }
-outp <- list(2,4,"Error in 2 * inp[[i]] : non-numeric argument to binary operator",8)
+
+create_matrix <- function (BM, nb_b, Ropt = 100, gamma = 2, th = 0.01) 
+{
+  Lmatrix <- function(BM, nb_b, Ropt, gamma, th) {
+    s <- length(BM)
+    L <- matrix(rep(BM, s), s, s, byrow = TRUE)/(matrix(rep(BM, 
+                                                            s), s, s) * Ropt)
+    L <- (L * exp(1 - L))^gamma
+    L[L < th] <- 0
+    L[, 1:nb_b] <- 0
+    return(L)
+  }
+  s <- length(BM)
+  L <- Lmatrix(BM, nb_b, Ropt, gamma, th)
+  isolated <- ifelse(any(colSums(L) + rowSums(L) == 0), TRUE, 
+                     FALSE)
+  cons_no_prey <- ifelse(any(colSums(L[, (nb_b + 1):s]) == 
+                               0), TRUE, FALSE)
+  tro_lev <- tryCatch(ATNr::TroLev(L), error = function(e) NULL)
+  connected <- is_connected(graph_from_adjacency_matrix(vegan::decostand(L,"pa")))
+  # i <- 0
+  # while ((isolated | cons_no_prey | is.null(tro_lev) | !connected) & 
+  #        i < 100) {
+  #   L <- Lmatrix(BM, nb_b, Ropt, gamma, th)
+  #   isolated <- ifelse(any(colSums(L) + rowSums(L) == 0), 
+  #                      TRUE, FALSE)
+  #   cons_no_prey <- ifelse(any(colSums(L[, (nb_b + 1):s]) == 
+  #                                0), TRUE, FALSE)
+  #   if (!isolated) {
+  #     tro_lev <- tryCatch(ATNr::TroLev(L), error = function(e) NULL)
+  #   }
+  #   i <- i + 1
+  # }
+  if (isolated) 
+    warning("Presence of an isolated species after 100 iterations.")
+  if (cons_no_prey) 
+    warning("Presence of consumer without prey after 100 iterations.")
+  if (!connected) 
+    warning("several conected component detected")
+  return(L)
+}
+
+
