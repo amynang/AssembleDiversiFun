@@ -3,6 +3,8 @@ library(assembly)
 library(ATNr)
 set.seed(123)
 
+source("functions.R")
+
 # the other plot foodweb function
 show_fw <- function(mat, title = NULL) {
   par(mar = c(.5, .5, 2, .5))
@@ -62,6 +64,7 @@ n_basal <- dim1
 # masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
 #                  sort(runif(n_species - n_basal, 2, 9)))
 
+# from 1ngram to 1kgram
 masses <- 10 ^ c(sort(runif(n_basal, -9, -3)),
                  sort(runif(n_species - n_basal, -9, 3)))
 
@@ -78,12 +81,6 @@ L[(dim1+1):n_species, ] = K[(dim1+1):n_species, ]
 # remove cannibalism
 diag(L) = 0
 
-# what = vector(mode = "logical",500)
-# prob = colSums(vegan::decostand(L[1:dim1,plant.cons],"pa"))/250
-# for (i in 1:500) { 
-# what[i] = sample(c("herbivore","omnivore"),1,prob[i])
-# }
-# which
 
 # split plant consumers to herbivores and omnivores
 for (i in plant.cons) { 
@@ -95,18 +92,6 @@ herbiv = setdiff(which(colSums(L[(dim1+1):n_species, ]) == 0),1:dim1)
 omniv  = setdiff(plant.cons, herbiv)
 predat = setdiff((dim1+1):n_species, plant.cons)
 
-# # select random subest of consumers to be herbivores
-# herbiv = sample((dim1+1):(dim1+dim2), 250)
-# # convert them to veganism
-# L[(dim1+1):(dim1+dim2), herbiv] = 0
-# 
-# # select a different random subset of consumers to be predators
-# predat = sample(setdiff((dim1+1):(dim1+dim2), herbiv), 250)
-# # make them only eat meat
-# L[1:dim1, predat] = 0
-# 
-# # the remaining 250 animals will be omnivorous
-# omniv = setdiff(1:1000,c(1:dim1,herbiv,predat))
 
 #make the interaction matrix sparser (removing 30% of the interactions)
 # the indices of non-zero cells
@@ -118,9 +103,6 @@ colSums(vegan::decostand(L[,(dim1+1):1000],"pa"))
 min(colSums(vegan::decostand(L[,(dim1+1):1000],"pa")))
 # marvel at the glory of your creation
 show_fw(vegan::decostand(L,"pa"))
-
-
-
 
 
 # species names are 0000group000 where 0000 is the index of the species (relates to bodymass) group is
@@ -187,42 +169,8 @@ for (k in 1:1000) {
   #Sys.sleep(.05)
   if (k == 4000) cat('- Done!')
 }
-# gg = vector(mode = "numeric", length=length(local_fws))
-# for (g in 1:length(local_fws)) {
-#   gg[g] = assembly:::.components(colnames(local_fws[[g]]), fw)
-# }
-# length(which(gg>1))
-# 
-# 
-# late_succession = vector(mode = "list", length = length(local_fws))
-# 
-# for (m in 1:length(late_succession)) { 
-#   counter = 0
-#   while(TRUE) { 
-#     
-#     # this will give 0x0 matrices in case of error (isolated species or components)
-#     sp_sim <- tryCatch(bride_of_similarity_filtering(colnames(local_fws[[m]]), 
-#                                             fw, 
-#                                             t = .1, 
-#                                             max.iter = 500) %>% 
-#                          sort(),
-#                        error = function(e) 0)
-#     
-#     late_succession[[m]] <- L[sp_sim,
-#                               sp_sim]
-#     counter <- counter+1
-#     if(dim(late_succession[[m]])[1]!=0 | counter==5
-#        ) break()
-#   }
-#   
-#   
-#   cat('\014')
-#   #cat(paste0(round((m/1600)*100), '%'))
-#   cat(paste0(m, '/', length(late_succession)))
-#   #Sys.sleep(.05)
-#   if (m == length(local_fws)) cat('- Done!')
-#   
-# }
+
+
 
 late_succession = vector(mode = "list", length = length(local_fws))
 for (m in 1:length(late_succession)) { 
@@ -244,19 +192,6 @@ for (m in 1:length(late_succession)) {
   
 }
 
-gg = vector(mode = "numeric", length=length(local_fws))
-for (g in 1:length(local_fws)) {
-  gg[g] = assembly:::.components(colnames(late_succession[[g]]), fw)
-}
-length(which(gg>1))
-
-
-
-dims = vector(mode = "numeric", length(late_succession))
-for (i in 1:length(late_succession)) {
-  dims[i] = dim(late_succession[[i]])[1]
-}
-table(dims) 
 
 
 show_fw(vegan::decostand(local_fws[[1000]],"pa"), title = "L-matrix model food web")
@@ -264,8 +199,8 @@ show_fw(vegan::decostand(late_succession[[1000]],"pa"), title = "L-matrix model 
 
 
 
-# saveRDS(late_succession, file="late_succession20220430.RData")
-# saveRDS(local_fws, file="local_fws20220430.RData")
+# saveRDS(late_succession, file="late_succession20220502.RData")
+# saveRDS(local_fws, file="local_fws20220502.RData")
 
 heatweb <- function(mat) {
   heat <- mat %>% #na_if(., 0) %>% 
