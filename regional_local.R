@@ -125,12 +125,31 @@ fw <- L
 fw[fw > 0] <- 1
 
 
-producer_diversity = c(2,4,8,16)
-# 4 levels of consumer diversity
-#consumer_diversity = c(30,40,50,60)
-# an empty list 
-local_early = vector(mode = "list")
+# an empty list
+reg.loc = vector(mode = "list", 1)
+# the first element of the list contains two objects:
+# the interaction matrix of the regional regional meta-foodweb
+# and the vector of bodymasses of the regional species
+reg.loc[[1]][[1]] = L
+reg.loc[[1]][[2]] = masses
 
+# the subsequent elements will also contain two objects each:
+
+# the first one is a local foodweb that is a random subset of the regional
+# with 2, 4, 8 or 16 producers and 60 consumers
+# consumers must have a resource and all producers have at least one consumer
+# also, we want the subset to comprise a single foodweb (no isolated components)
+# these will be our "early succession" foodwebs
+
+# the second one will be the foodweb of a community with the same basal species
+# and the same number of consumers as the first one but reduced similarity among
+# consumers
+# these will be our "late succession" foodwebs
+
+# specify the levels of producer diversity
+producer_diversity = c(2,4,8,16)
+
+# generate the "early succession" local foodwebs
 # k iterations
 for (k in 1:10) { 
   #for (j in consumer_diversity) {
@@ -150,17 +169,13 @@ for (k in 1:10) {
       ) break()
     }
     
-    
     # subset the meta-fooweb to get the local foodweb
     local_fw = L[c(local_producers, local_consumers),
                  c(local_producers, local_consumers)]
+    
     # add it to the list
-    #local_early[[length(local_early) + 1]] = local_fw
-    #reg.loc[[length(reg.loc) + 1]] = matrix(NA)
-    local_early[[length(local_early) + 1]] = local_fw
-    
-    
-    
+    reg.loc[[length(reg.loc)+1]] = vector(mode = "list")
+    reg.loc[[length(reg.loc)]][[1]] = local_fw
     
     #show_fw(vegan::decostand(local_fw,"pa"), title = "L-matrix model food web")
     
@@ -173,38 +188,28 @@ for (k in 1:10) {
   if (k == 4000) cat('- Done!')
 }
 
-reg.loc = vector(mode = "list", length(local_early)+1)
-reg.loc[[1]][[1]] = L
-reg.loc[[1]][[2]] = masses
-for (i in 2:(length(local_early)+1)) {
-  reg.loc[[i]][[1]] = local_early[[i-1]]
-}
-
-#local_late = vector(mode = "list", length = length(local_early))
-for (m in 1:length(local_early)) { 
-  
-  sp_sim <- bride_of_similarity_filtering(colnames(local_early[[m]]), 
+# generate the "late succession" foodwebs
+for (m in 2:length(reg.loc)) { 
+  # each of the local foodwebs goes through a stochastic process that replaces 
+  # species that are highly similar to other locals, with random species from the
+  # regional pool, trying to reduce the overall linkage similarity
+  sp_sim <- bride_of_similarity_filtering(colnames(reg.loc[[m]][[1]]), 
                                           fw, 
                                           t = .1, 
-                                          max.iter = 500) %>% 
-    sort()
+                                          max.iter = 500) %>% sort()
   
-  # local_late[[m]] <- L[sp_sim,
-  #                      sp_sim]
-  
-  reg.loc[[m+1]][[2]] = L[sp_sim, sp_sim]
+  # add the new foodweb next to the old one on the list
+  reg.loc[[m]][[2]] = L[sp_sim, sp_sim]
   
   cat('\014')
   #cat(paste0(round((m/1600)*100), '%'))
-  cat(paste0(m, '/', length(local_early)))
+  cat(paste0(m-1, '/', length(reg.loc)-1))
   #Sys.sleep(.05)
-  if (m == length(local_early)) cat('- Done!')
+  if (m == length(reg.loc)) cat('- Done!')
   
 }
 
-
-
-
+# save to working directory
 saveRDS(reg.loc, file="reg.loc_20220506.RData")
 
 reg.loc = readRDS("reg.loc_20220506.RData")
