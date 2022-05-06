@@ -1,7 +1,7 @@
 library(tidyverse)
 library(assembly)
 library(ATNr)
-set.seed(123)
+set.seed(321)
 
 source("functions.R")
 
@@ -27,19 +27,19 @@ dim2 = 500
 dum = data.frame(row = rep(1:dim1,dim2),
                  col = rep(1:dim2,each = dim1))
 dum$strength = (dum$row/dim1)^2 + (dum$col/dim2)^2
-lattice::levelplot(strength ~ col*row, 
-                   data = dum)
+# lattice::levelplot(strength ~ col*row, 
+#                    data = dum)
 
 # turn this into a matrix
 duum = matrix(dum$strength,dim1,dim2)
-image(duum)
+# image(duum)
 
 drum = duum
 for (i in 1:(dim1*dim2)) {
   #probability of non-zero depends on the cell value, then value drawn from [.01,1]
-  drum[i] = rbernoulli(1, (duum[i])^2) * runif(1,.01,1)
+  drum[i] = rbernoulli(1, (duum[i])^2)# * runif(1,.01,1)
 }
-image(drum)
+# image(drum)
 
 # shuffle them so that later on, this pattern will be unrelated to bodymasses
 rand <- sample(ncol(drum))
@@ -61,10 +61,10 @@ n_species <- dim1+dim2+250
 n_basal <- dim1
 
 # body mass of species
-# masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
-#                  sort(runif(n_species - n_basal, 2, 9)))
+# masses <- 10 ^ c(sort(runif(n_basal, 0, 6)),
+#                  sort(runif(n_species - n_basal, 2, 12)))
 
-# from 1ngram to 1kgram
+# # from 1ngram to 1kgram
 masses <- 10 ^ c(sort(runif(n_basal, -9, -3)),
                  sort(runif(n_species - n_basal, -9, 3)))
 
@@ -124,14 +124,15 @@ heatweb(L)
 fw <- L
 fw[fw > 0] <- 1
 
+
 producer_diversity = c(2,4,8,16)
 # 4 levels of consumer diversity
 #consumer_diversity = c(30,40,50,60)
 # an empty list 
-local_fws = vector(mode = "list")
+local_early = vector(mode = "list")
 
 # k iterations
-for (k in 1:1000) { 
+for (k in 1:10) { 
   #for (j in consumer_diversity) {
   
   for (i in producer_diversity) {
@@ -154,7 +155,9 @@ for (k in 1:1000) {
     local_fw = L[c(local_producers, local_consumers),
                  c(local_producers, local_consumers)]
     # add it to the list
-    local_fws[[length(local_fws) + 1]] = local_fw
+    #local_early[[length(local_early) + 1]] = local_fw
+    #reg.loc[[length(reg.loc) + 1]] = matrix(NA)
+    local_early[[length(local_early) + 1]] = local_fw
     
     
     
@@ -170,37 +173,49 @@ for (k in 1:1000) {
   if (k == 4000) cat('- Done!')
 }
 
+reg.loc = vector(mode = "list", length(local_early)+1)
+reg.loc[[1]][[1]] = L
+reg.loc[[1]][[2]] = masses
+for (i in 2:(length(local_early)+1)) {
+  reg.loc[[i]][[1]] = local_early[[i-1]]
+}
 
-
-late_succession = vector(mode = "list", length = length(local_fws))
-for (m in 1:length(late_succession)) { 
+#local_late = vector(mode = "list", length = length(local_early))
+for (m in 1:length(local_early)) { 
   
-  sp_sim <- bride_of_similarity_filtering(colnames(local_fws[[m]]), 
+  sp_sim <- bride_of_similarity_filtering(colnames(local_early[[m]]), 
                                           fw, 
                                           t = .1, 
                                           max.iter = 500) %>% 
     sort()
   
-  late_succession[[m]] <- L[sp_sim,
-                            sp_sim]
+  # local_late[[m]] <- L[sp_sim,
+  #                      sp_sim]
+  
+  reg.loc[[m+1]][[2]] = L[sp_sim, sp_sim]
   
   cat('\014')
   #cat(paste0(round((m/1600)*100), '%'))
-  cat(paste0(m, '/', length(late_succession)))
+  cat(paste0(m, '/', length(local_early)))
   #Sys.sleep(.05)
-  if (m == length(local_fws)) cat('- Done!')
+  if (m == length(local_early)) cat('- Done!')
   
 }
 
 
 
-show_fw(vegan::decostand(local_fws[[1000]],"pa"), title = "L-matrix model food web")
-show_fw(vegan::decostand(late_succession[[1000]],"pa"), title = "L-matrix model food web")
+
+saveRDS(reg.loc, file="reg.loc_20220506.RData")
+
+reg.loc = readRDS("reg.loc_20220506.RData")
+
+show_fw(vegan::decostand(local_early[[4]],"pa"), title = "L-matrix model food web")
+show_fw(vegan::decostand(local_late[[4]],"pa"), title = "L-matrix model food web")
 
 
 
-# saveRDS(late_succession, file="late_succession20220502.RData")
-# saveRDS(local_fws, file="local_fws20220502.RData")
+# saveRDS(local_late, file="local_late20220502.RData")
+# saveRDS(local_early, file="local_early20220502.RData")
 
 heatweb <- function(mat) {
   heat <- mat %>% #na_if(., 0) %>% 
