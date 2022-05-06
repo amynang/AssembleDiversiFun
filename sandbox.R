@@ -390,7 +390,7 @@ ecodist::distance(trait.mat)
 # body mass of species
 masses <- 10 ^ c(sort(runif(n_basal, 1, 3)),
                  sort(runif(n_species - n_basal, 2, 9)))
-masses <- sort(rtgamma(1e3, 1, scale=2, a=0, b=10))*10
+masses <- sort(rtgamma(1e3, 1, scale=2, a=0, b=10))^3
 
 # 2) create the food web
 # create the L matrix
