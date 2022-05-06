@@ -476,3 +476,117 @@ create_matrix <- function (BM, nb_b, Ropt = 100, gamma = 2, th = 0.01)
 }
 
 
+
+n = 3
+
+set.seed(321)
+biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
+
+model_scaled <- create_model_Scaled(# number of species
+  dim(reg.loc[[n]][[2]])[1], 
+  # number of basal species
+  length(grep("plant", colnames(reg.loc[[n]][[2]]))), 
+  # bodymasses of species
+  reg.loc[[1]][[2]][as.integer(substr(colnames(reg.loc[[n]][[2]]), 1, 4))], 
+  # binary interaction matrix
+  vegan::decostand(reg.loc[[n]][[2]],"pa")
+)
+
+model_scaled <- initialise_default_Scaled(model_scaled)
+model_scaled$initialisations()
+model_scaled$ext = 0.001
+str(model_scaled)
+
+#model_scaled$alpha = matrix(.4,4,4)
+#diag(model_scaled$alpha) = 1
+
+times <- seq(0, 1000, by = 5)
+#biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
+
+sol1 <- lsoda_wrapper(times, biomasses, model_scaled, verbose = FALSE)
+#plot_odeweb(sol1, dim(local_fws[[n]])[1])
+soll = as.data.frame(sol1)
+colnames(soll) = c("time",
+                   # paste0("nut_",1:2),
+                   colnames(reg.loc[[n]][[2]]))
+
+solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
+solll$taxon = substr(solll$species, 6, 8)
+# solll[solll==""] = "nut"
+ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
+  geom_point()
+
+
+
+
+model_unscaled <- create_model_Unscaled(# number of species
+  dim(reg.loc[[n]][[2]])[1], 
+  # number of basal species
+  length(grep("plant", colnames(reg.loc[[n]][[2]]))), 
+  # bodymasses of species
+  reg.loc[[1]][[2]][as.integer(substr(colnames(reg.loc[[n]][[2]]), 1, 4))], 
+  # binary interaction matrix
+  vegan::decostand(reg.loc[[n]][[2]],"pa")
+)
+
+model_unscaled <- initialise_default_Unscaled(model_unscaled)
+model_unscaled$initialisations()
+str(model_unscaled)
+
+times <- seq(0, 1000, by = 5)
+#biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
+
+sol1 <- lsoda_wrapper(times, biomasses, model_unscaled, verbose = FALSE)
+#plot_odeweb(sol1, dim(local_fws[[n]])[1])
+soll = as.data.frame(sol1)
+colnames(soll) = c("time",
+                   # paste0("nut_",1:2),
+                   colnames(reg.loc[[n]][[2]]))
+
+solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
+solll$taxon = substr(solll$species, 6, 8)
+# solll[solll==""] = "nut"
+ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
+  geom_point()
+
+
+
+
+
+
+
+n=2
+
+model_unscaled_nuts <- create_model_Unscaled_nuts(# number of species
+  dim(reg.loc[[n]][[2]])[1], 
+  # number of basal species
+  length(grep("plant", colnames(reg.loc[[n]][[2]]))), 
+  4,
+  # bodymasses of species
+  reg.loc[[1]][[2]][as.integer(substr(colnames(reg.loc[[n]][[2]]), 1, 4))], 
+  # binary interaction matrix
+  vegan::decostand(reg.loc[[n]][[2]],"pa")
+)
+
+model_unscaled_nuts <- initialise_default_Unscaled_nuts(model_unscaled_nuts, reg.loc[[n]][[2]])
+model_unscaled_nuts$initialisations()
+str(model_unscaled_nuts)
+
+times <- seq(0, 1000, by = 5)
+set.seed(321)
+biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
+biomasses <- append(runif(4, 2, 3), biomasses) # nutrient concentration
+
+sol1 <- lsoda_wrapper(times, biomasses, model_unscaled_nuts, verbose = FALSE)
+#plot_odeweb(sol1, dim(local_fws[[n]])[1])
+soll = as.data.frame(sol1)
+colnames(soll) = c("time",
+                   paste0("nut_",1:4),
+                   colnames(reg.loc[[n]][[2]]))
+
+solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
+solll$taxon = substr(solll$species, 6, 8)
+solll[solll==""] = "nut"
+ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
+  geom_point()
+
