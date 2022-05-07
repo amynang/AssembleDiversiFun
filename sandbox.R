@@ -475,7 +475,7 @@ create_matrix <- function (BM, nb_b, Ropt = 100, gamma = 2, th = 0.01)
   return(L)
 }
 
-
+########### Community Dynamics #####################
 
 n = 3
 
@@ -589,4 +589,66 @@ solll$taxon = substr(solll$species, 6, 8)
 solll[solll==""] = "nut"
 ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
   geom_point()
+
+
+
+
+
+
+
+
+
+
+
+########################## Maureaud et al., 2020################################
+
+
+size.preference <- function(pred.mass, prey.mass, oppmr = 100, sigma.m = 1, ...) {
+  pref <- exp(-(log(pred.mass/(oppmr*prey.mass)))^2/(2*sigma.m^2))
+  return(pref)
+}
+
+# curve(size.preference(100,x,100,2), from = 0.01, to = 1e2)
+
+home.range <- function(mass, sigma0 = sqrt(2)/2, alpha = .5, m0 = 5e-04) {
+  hr <- sigma0 + alpha*log10(mass/m0)
+  return(hr)
+}
+
+spatial.kernel <- function(pred.mass, prey.mass, chi.pred, chi.prey) {
+  s.k <- (1/sqrt(2*pi*(home.range(pred.mass)^2 + home.range(prey.mass)^2)))*exp(-(chi.pred - chi.prey)^2/(2*(home.range(pred.mass)^2 + home.range(prey.mass)^2)))
+  return(s.k)
+}
+
+interaction.strength <- function(pred.mass, prey.mass, chi.pred, chi.prey) {
+  i.s <- size.preference(pred.mass, prey.mass)*spatial.kernel(pred.mass, prey.mass, chi.pred, chi.prey)
+  return(i.s)
+}
+
+n = 1e2
+trait.mat = data.frame(bodymass=sort(10^runif(n, 0, 11)),
+                       habitat=runif(n,0,50)
+                               #rtnorm(n, mean=0, sd=4, a=0, b=Inf)
+                       )
+dis = as.matrix(distance(trait.mat, "euclidean"))
+#dis[upper.tri(dis)] <- 0
+sim = 1 / (1 + dis)
+heatweb(log(dis))
+# trait.mat = data.frame(bodymass=1e2,
+#                        habitat=sort(runif(n,-25,25)))
+
+
+int.mat = matrix(NA,n,n)
+
+for (pred in 1:n) {
+  for (prey in 1:n) {
+    int.mat[prey,pred] = interaction.strength(trait.mat[pred,1],
+                                              trait.mat[prey,1],
+                                              trait.mat[pred,2],
+                                              trait.mat[prey,2])
+  }
+}
+colnames(int.mat) = rownames(int.mat) = paste0("sp_",1:n)
+
+heatweb(int.mat)
 
