@@ -5,6 +5,7 @@ library(ggraph)
 library(see) # for the half-violin
 library(scico) # for the palette
 library(patchwork)
+library(cowplot)
 
 
 set.seed(321)
@@ -27,7 +28,7 @@ plant.niche$niche[plant.niche$Succession=="Late" &
 scico(20, palette = 'bamako')
 scales::show_col(scico(20, palette = 'bamako'))
 
-ggplot(plant.niche, aes(x = Succession, y=niche, fill = species)) +
+pn = ggplot(plant.niche, aes(x = Succession, y=niche, fill = species)) +
   geom_violinhalf() +
   geom_hline(yintercept=c(.25, .75), linetype='dashed', color="grey") +
   theme_modern() +
@@ -42,7 +43,7 @@ set.seed(321)
 vec = sort(rexp(1e3,.2), decreasing = T) + rnorm(1e3,0,1)
 link.sim = data.frame(Linkage_Similarity = (vec - min(vec)) / (max(vec) - min(vec)),
                       Iterations = 1:1e3)
-ggplot(link.sim,aes(Iterations,Linkage_Similarity)) +
+ls = ggplot(link.sim,aes(Iterations,Linkage_Similarity)) +
   geom_smooth(span = .3, se = FALSE, color="#8F403D")+
   theme_modern() +
   theme(axis.title.x = element_text(size = 15),
@@ -149,7 +150,16 @@ fw6 = local.fw( 8,30)
 fw7 = local.fw(16,30)
 fw8 = local.fw(16,30)
 
-(fw0/plot_spacer()) + ((fw1 + fw2)/(fw3 + fw4)/(fw5 + fw6)/(fw7 + fw8))
+(plot_spacer()/fw0) + ((fw1 + fw2)/(fw3 + fw4)/(fw5 + fw6)/(fw7 + fw8))
+
+
+
+local <- plot_grid(fw1,fw2,fw3,fw4,fw5,fw6,fw7,fw8, ncol = 2)
+regional <- plot_grid(fw0,NULL, ncol = 1)
+sim <- plot_grid(pn,ls,NULL,ncol = 1)
+plot_grid(regional, local, sim, ncol = 3)
+
+
 
 + plot_annotation(tag_levels = 'a')
 
