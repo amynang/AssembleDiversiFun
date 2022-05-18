@@ -29,20 +29,33 @@ scales::show_col(scico(20, palette = 'bamako'))
 
 ggplot(plant.niche, aes(x = Succession, y=niche, fill = species)) +
   geom_violinhalf() +
-  geom_hline(yintercept=c(.25, .75), linetype='dashed') +
+  geom_hline(yintercept=c(.25, .75), linetype='dashed', color="grey") +
   theme_modern() +
-  theme(axis.title.x = element_text(size = 20),
-        axis.title.y = element_text(size = 20)) +
+  theme(axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15)) +
   labs(y = "Niche gradient") +
   scale_fill_manual(values=c("#36622C","#DAC051"))
 
 
 
-# interaction matrix
+set.seed(321)
+vec = sort(rexp(1e3,.2), decreasing = T) + rnorm(1e3,0,1)
+link.sim = data.frame(Linkage_Similarity = (vec - min(vec)) / (max(vec) - min(vec)),
+                      Iterations = 1:1e3)
+ggplot(link.sim,aes(Iterations,Linkage_Similarity)) +
+  geom_smooth(span = .3, se = FALSE, color="#8F403D")+
+  theme_modern() +
+  theme(axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15)) +
+  labs(y = "Linkage Similarity")
+
+
+# interaction matrix of the metacommunity
 data <- matrix(sample(0:1, 2500, replace=TRUE, prob=c(0.8,0.2)), nrow=50)
 network <- graph_from_adjacency_matrix(matrix(sample(0:1, 2500, replace=TRUE, 
                                                      prob=c(0.8,0.2)), nrow=50), 
                                        mode='undirected', diag=F )
+#the network
 plot(network, 
      layout=layout.circle,
      vertex.label=NA,
@@ -51,37 +64,36 @@ plot(network,
                                begin = .2, 
                                end = .8),
                          50, replace = F))
-
-
-
-create_Lmatrix(c(10^runif(8,-9,-3),
-                 10^runif(30,-9,3)), 
-               8, Ropt = 3.98, gamma = 2, th = 0.01)
-
-consumers = 30
-producers = 8
-species = consumers + producers
-
-lay<-matrix(nrow=species,ncol=2)
-lay[,1]<-c(seq(from = 1, to = 10, by = 10/producers),runif(consumers,1,10))
-lay[,2]<-c(rep(0,producers),runif(consumers,1,10))
-
-plot(graph_from_adjacency_matrix(vegan::decostand(create_Lmatrix(10 ^ c(sort(runif(producers, -9, -3)),
-                                                                        sort(runif(consumers, -9, 3))), 
-                                                                 producers, 
-                                                                 Ropt = 3.98, 
-                                                                 gamma = 2, 
-                                                                 th = 0.01),
-                                                  "pa"), 
-                                 mode='undirected', diag=F),
-     layout=lay,
-     vertex.label=NA,
-     vertex.size=10,
-     vertex.color=sample(scico(species, palette = 'bilbao', 
-                               begin = .2, 
-                               end = .8),
-                         species, replace = F))
-
+regional.fw <- function(producers = 8, consumers = 30) {
+  
+  # number of all species
+  species = consumers + producers
+  # # matrix of coordinates
+  # lay<-matrix(nrow=species,ncol=2)
+  # lay[,1]<-c(seq(from = 1, to = 20, by = 20/producers),runif(consumers,1,20))
+  # lay[,2]<-c(rep(0,producers),runif(consumers,1,20))
+  
+  # plot
+  p <- ggraph::ggraph(igraph::graph_from_adjacency_matrix(matrix(sample(0:1, species*species, replace=TRUE, 
+                                                                        prob=c(0.8,0.2)), nrow=species), 
+                                                          mode='undirected', diag=F ),
+                      layout="circle") + 
+    geom_edge_link(colour = "grey") + 
+    geom_node_point(fill = sample(c(scico::scico(producers, palette = 'bamako',
+                                                 end = .8), 
+                                    scico::scico(consumers, palette = 'bilbao', 
+                                                 begin = .2, 
+                                                 end = .8)),
+                                  species, replace = F),
+                    colour = "black",
+                    size = 5,
+                    shape = 21,
+                    stroke = 1) + 
+    theme(legend.position = 'none') +
+    theme_graph(background = "white")
+  return(p)
+  
+}
 
 local.fw <- function(producers = 8, consumers = 30) {
   
@@ -89,69 +101,57 @@ local.fw <- function(producers = 8, consumers = 30) {
   species = consumers + producers
   # matrix of coordinates
   lay<-matrix(nrow=species,ncol=2)
-  lay[,1]<-c(seq(from = 1, to = 10, by = 10/producers),runif(consumers,1,10))
-  lay[,2]<-c(rep(0,producers),runif(consumers,1,10))
+  lay[,1]<-c(seq(from = 1, to = 20, by = 20/producers),runif(consumers,1,20))
+  lay[,2]<-c(rep(0,producers),runif(consumers,1,20))
   
   # plot
-  p = plot(igraph::graph_from_adjacency_matrix(vegan::decostand(create_Lmatrix(10 ^ c(sort(runif(producers, -9, -3)),
-                                                                                      sort(runif(consumers, -9, 3))), 
-                                                                               producers, 
-                                                                               Ropt = 3.98, 
-                                                                               gamma = 2, 
-                                                                               th = 0.01),
-                                                                "pa"), 
-                                               mode='undirected', diag=F),
-           layout=lay,
-           vertex.label=NA,
-           vertex.size=10,
-           vertex.color=c(sample(scico::scico(producers, palette = 'bamako'),
-                                 producers, replace = F),
-                          sample(scico::scico(consumers, palette = 'bilbao', 
-                                       begin = .2, 
-                                       end = .8),
-                                 consumers, replace = F)))
-  return(p)
-  
-}
-
-ggraph(igraph::graph_from_adjacency_matrix(vegan::decostand(create_Lmatrix(10 ^ c(sort(runif(producers, -9, -3)),
-                                                                                  sort(runif(consumers, -9, 3))), 
-                                                                           producers, 
-                                                                           Ropt = 3.98, 
-                                                                           gamma = 2, 
-                                                                           th = 0.01),
-                                                            "pa"), 
-                                           mode='undirected', diag=F),
-       layout=lay)+ 
-  geom_edge_link(colour = "grey") + 
-  geom_node_point(colour = c(sample(scico::scico(producers, palette = 'bamako'),
+  p <- ggraph::ggraph(igraph::graph_from_adjacency_matrix(vegan::decostand(create_Lmatrix(10 ^ c(sort(runif(producers, -9, -3)),
+                                                                                                 sort(runif(consumers, -9, 3))), 
+                                                                                          producers, 
+                                                                                          Ropt = 3.98, 
+                                                                                          gamma = 2, 
+                                                                                          th = 0.01),
+                                                                           "pa"), 
+                                                          mode='undirected', diag=F),
+                      layout=lay)+ 
+    geom_edge_link(colour = "grey") + 
+    geom_node_point(fill = c(sample(scico::scico(producers, palette = 'bamako',
+                                                 end = .8),
                                     producers, replace = F),
                              sample(scico::scico(consumers, palette = 'bilbao', 
                                                  begin = .2, 
                                                  end = .8),
                                     consumers, replace = F)),
-                  size = 10) + 
-  theme(legend.position = 'none') +
-  theme_graph(background = "white")
+                    colour = "black",
+                    size = 3,
+                    shape = 21,
+                    stroke = .5) + 
+    theme(legend.position = 'none') +
+    theme_graph(background = "white")
+  return(p)
+  
+}
 
 
 
-fw1 = local.fw(2,30)
-fw2 = local.fw(2,30)
-fw3 = local.fw(4,30)
-fw4 = local.fw(4,30)
-fw5 = local.fw(8,30)
-fw6 = local.fw(8,30)
 
-par(mfrow=c(3,2))
-local.fw(2,30)
-local.fw(2,30)
-local.fw(4,30)
-local.fw(4,30)
-local.fw(8,30)
-local.fw(8,30)
 
-(fw1 + fw2)/(fw3 + fw4)/(fw5 + fw6)
+local.fw(250,750)
+
+set.seed(321)
+fw0 = regional.fw(13,37)
+fw1 = local.fw( 2,30)
+fw2 = local.fw( 2,30)
+fw3 = local.fw( 4,30)
+fw4 = local.fw( 4,30)
+fw5 = local.fw( 8,30)
+fw6 = local.fw( 8,30)
+fw7 = local.fw(16,30)
+fw8 = local.fw(16,30)
+
+(fw0/plot_spacer()) + ((fw1 + fw2)/(fw3 + fw4)/(fw5 + fw6)/(fw7 + fw8))
+
++ plot_annotation(tag_levels = 'a')
 
 
 ggraph(igraph::graph_from_adjacency_matrix(matrix(sample(0:1, 100, replace=TRUE, 
