@@ -24,7 +24,7 @@ reg.loc = readRDS("reg.loc_20220506.RData")
 
 
 # Pick a number, any number (1,41]
-n = 3
+n = 5
 
 set.seed(321)
 biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
@@ -32,7 +32,11 @@ biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
 # all examples below are with reg.loc[[n]][[2]] so the late succession version 
 # of the chosen community
 
-# like Delmas (but w/ allometric rel. preference matrix)
+species = dim(reg.loc[[n]][[2]])[1]
+plants = length(grep("plant", colnames(reg.loc[[n]][[2]])))
+bodymasses = reg.loc[[1]][[2]][as.integer(substr(colnames(reg.loc[[n]][[2]]), 1, 4))]
+
+# like Delmas
 model_scaled <- create_model_Scaled(# number of species
                                     dim(reg.loc[[n]][[2]])[1], 
                                     # number of basal species
@@ -47,11 +51,25 @@ model_scaled <- initialise_default_Scaled(model_scaled)
 model_scaled$initialisations()
 
 # change W so that unlike Delmas, relative preferences are allometric
-model_scaled$w = vegan::decostand(reg.loc[[n]][[2]][,-grep("plant", colnames(reg.loc[[n]][[2]]))], "total" , 2)
+#model_scaled$w = vegan::decostand(reg.loc[[n]][[2]][,-grep("plant", colnames(reg.loc[[n]][[2]]))], "total" , 2)
 str(model_scaled)
 
-#model_scaled$alpha = matrix(.4,4,4)
-#diag(model_scaled$alpha) = 1
+competition <- function(lower=.8, upper=1, plants) { 
+  # create competition matrix
+  alpha = matrix(NA, plants, plants)
+  # draw diagonals from (lower, upper)
+  diag(alpha) = runif(plants, lower,upper)
+  # draw off diagonals so that columns sum to 1
+  for (i in 1:plants) {
+    # replace NAs in each column with values that sum to the complement of that diagonal
+    alpha[which(is.na(alpha[,i])),i] = (1-diag(alpha)[i])*brms::rdirichlet(1,rep(2,(plants-1)))
+  }
+  return(alpha)
+}
+
+
+model_scaled$alpha = competition(.6,.8,plants)
+#diag(model_scaled$alpha) = .8
 
 times <- seq(0, 1000, by = 5)
 #biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses
@@ -68,7 +86,7 @@ solll$taxon = substr(solll$species, 6, 8)
 
 # plot results
 ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
-  geom_point()
+  geom_point() 
 
 
 
