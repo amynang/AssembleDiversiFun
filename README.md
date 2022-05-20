@@ -1,6 +1,10 @@
 # AssembleDiversiFun
 Modeling project examining the effects of producer diversity in early/late succession multi-trophic communities on ecosystem functioning.
 
+<p align="center">
+<img src="examples/concept.png" align="centre" width=1000 alt="concept"/>
+</p>
+
 regional_local.R creates a regional species pool of 1000 species (250 each of plants, herbivores, omnivores, predators). Bodymasses range from 10^-9g to 10^3g, representing soil organisms from nematodes to small mammals. Herbivorous interactions, including herbivory by omnivores, have a nested pattern with some plants consumed by most plant consumers, while others by only few and some plant consumers consuming most plant species while others only few of them. Plant consumers are randomly selected across the body size range, then omnivores are sampled from plant consumers with a probability that depends on the fraction of plants that a species consumes (so omnivores are more likely than herbivores to be generalists). Predatory interactions are allometric, following Schneider (2016) but with an optimal predator prey mass ratio of 0.6 on the log scale, wich is typical of terrestrial invertebrates (Brose et al., 200?). The resulting interaction matrix is thinned by randomly removing 30% of the produced interactions. This produces a meta-foodweb where allometry does not absolutely determine consumption.
 
 <p align="center">
