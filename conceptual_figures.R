@@ -32,10 +32,14 @@ pn = ggplot(plant.niche, aes(x = Succession, y=niche, fill = species)) +
   geom_violinhalf() +
   geom_hline(yintercept=c(.25, .75), linetype='dashed', color="grey") +
   theme_modern() +
-  theme(axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10)) +
+  labs(title = ~bold("Niche differenciation")) +
+  theme(  plot.title = element_text(size = 12, hjust = 0.5),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+         axis.text.y = element_text(size = 10)) +
   labs(y = "Niche gradient") +
-  scale_fill_manual(values=c("#36622C","#DAC051"))
+  scale_fill_manual(values=c("#36622C","#DAC051"))# + coord_fixed()
+
 
 
 
@@ -46,9 +50,16 @@ link.sim = data.frame(Linkage_Similarity = (vec - min(vec)) / (max(vec) - min(ve
 ls = ggplot(link.sim,aes(Iterations,Linkage_Similarity)) +
   geom_smooth(span = .3, se = FALSE, color="#8F403D")+
   theme_modern() +
-  theme(axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10)) +
-  labs(y = "Linkage Similarity")
+  labs(title = "How it is simulated") +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+         axis.text.x = element_text(size = 10),
+         axis.text.y = element_text(size = 10)) +
+  labs(y = "Linkage Similarity")# + coord_fixed(1e3)
+
+a.early = heatweb(competition(.5,.6, plants = 8)) + coord_fixed()
+ a.late = heatweb(competition(.8, 1, plants = 8)) + coord_fixed()
 
 
 # # interaction matrix of the metacommunity
@@ -274,7 +285,7 @@ local.fw <- function(producers = 8, consumers = 30) {
                     shape = 21,
                     stroke = .5) + 
     theme(legend.position = 'none') +
-    theme_graph(background = "white")
+    theme_graph(background = "white")# + coord_fixed()
   return(p)
   
 }
@@ -300,9 +311,14 @@ fw8 = local.fw(16,30)
 early <- plot_grid(fw1,fw3,fw5,fw7, ncol = 1)  + draw_plot_label( "Early succession", size = 12, x = .12)
 late  <- plot_grid(fw2,fw4,fw6,fw8, ncol = 1)  + draw_plot_label("Late succession", size = 12, x = .12)
 regional <- plot_grid(fw0, NULL, ncol = 1)     + draw_plot_label("Regional pool", size = 12, x = .16)
-sim <- plot_grid(NULL,ls,pn,NULL, ncol = 1)
-plot_grid(regional, early, sim, late, ncol = 4)
-
+comp <- plot_grid(a.early, a.late, ncol = 2) #+ draw_plot_label("Producer competition", size = 12, x = .16)
+sim <- plot_grid(pn,ls,comp, ncol = 1) #+ draw_plot_label("Niche differenciation", size = 12, x = .16)
+(concept <- plot_grid(regional, early, sim, late, ncol = 4))
+ggsave("Concept.png", concept, bg="white",
+       width = 15,
+       height = 7.5,
+       units = "in",
+       dpi = 300)
 
 
 

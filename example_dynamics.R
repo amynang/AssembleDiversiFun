@@ -24,7 +24,7 @@ reg.loc = readRDS("reg.loc_20220506.RData")
 
 
 # Pick a number, any number (1,41]
-n = 5
+n = 4
 
 set.seed(321)
 biomasses <- runif(dim(reg.loc[[n]][[2]])[1], 2, 3) # starting biomasses

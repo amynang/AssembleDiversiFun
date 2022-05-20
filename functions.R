@@ -6,7 +6,7 @@ heatweb <- function(mat) {
     mutate(species= fct_relevel(species,colnames(mat))) %>%
     ggplot(aes(x=species, y=ordered(id, levels = rev(unique(id))), fill=strength)) + 
     geom_raster() +
-    #theme_bw() +
+    theme_void() +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
           axis.ticks.x=element_blank(),
