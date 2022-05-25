@@ -195,7 +195,7 @@ for (m in 2:length(reg.loc)) {
   # regional pool, trying to reduce the overall linkage similarity
   sp_sim <- bride_of_similarity_filtering(colnames(reg.loc[[m]][[1]]), 
                                           fw, 
-                                          t = .1, 
+                                          t = .01, 
                                           max.iter = 500) %>% sort()
   
   # add the new foodweb next to the old one on the list
@@ -210,7 +210,7 @@ for (m in 2:length(reg.loc)) {
 }
 
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220506.RData")
+saveRDS(reg.loc, file="reg.loc_20220525.RData")
 
 reg.loc = readRDS("reg.loc_20220506.RData")
 
