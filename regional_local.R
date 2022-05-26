@@ -151,7 +151,7 @@ producer_diversity = c(2,4,8,16)
 
 # generate the "early succession" local foodwebs
 # k iterations
-for (k in 1:10) { 
+for (k in 1:1000) { 
   #for (j in consumer_diversity) {
   
   for (i in producer_diversity) {
@@ -209,8 +209,22 @@ for (m in 2:length(reg.loc)) {
   
 }
 
+
+# for each early-late pair, add a matrix of high interspecific 
+# and a matrix of low interspecific competition
+for (m in 2:length(reg.loc)) {
+  # number of plant species
+  plants = length(grep("plant", colnames(reg.loc[[m]][[1]])))
+  # add competition matrices
+  # lower upper values specify **intraspecific** competition
+  # interspecific for each plant then sums to 1-intraspesific
+  reg.loc[[m]][[3]] = competition(lower = .8, upper = 1, plants) #low inter-
+  reg.loc[[m]][[4]] = competition(lower = .6, upper = .8, plants) #high inter-
+}
+
+
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220525.RData")
+saveRDS(reg.loc, file="reg.loc_20220526.RData")
 
 reg.loc = readRDS("reg.loc_20220506.RData")
 
