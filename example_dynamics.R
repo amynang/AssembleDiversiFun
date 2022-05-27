@@ -3,7 +3,7 @@ library(assembly)
 library(ATNr)
 set.seed(321)
 
-reg.loc = readRDS("reg.loc_20220525.RData")
+reg.loc = readRDS("reg.loc_20220526.RData")
 # the first element of the list contains two objects:
 # the interaction matrix of the regional meta-foodweb
 # and the vector of bodymasses of the regional species
@@ -24,7 +24,7 @@ reg.loc = readRDS("reg.loc_20220525.RData")
 
 
 # Pick a number, any number (1,41]
-n = 41
+n = 58
 # early (1) or late (2) succession
 s = 1
 
@@ -50,10 +50,10 @@ model_scaled <- create_model_Scaled(# number of species
 )
 
 model_scaled <- initialise_default_Scaled(model_scaled)
-model_scaled$initialisations()
+#model_scaled$initialisations()   # not needed in newest version of ATNr
 
-# change W so that unlike Delmas, relative preferences are allometric
-#model_scaled$w = vegan::decostand(reg.loc[[n]][[2]][,-grep("plant", colnames(reg.loc[[n]][[2]]))], "total" , 2)
+# change W so that unlike Delmas, generalists are as efficient as specialists
+#model_scaled$w = 1
 str(model_scaled)
 
 competition <- function(lower=.8, upper=1, plants) { 
@@ -90,8 +90,8 @@ solll$taxon = substr(solll$species, 6, 8)
 ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
   geom_point() 
 
-
-
+colSums(model_scaled$F)
+View(model_scaled$F)
 # # like Binzer
 # model_unscaled <- create_model_Unscaled(# number of species
 #                                         dim(reg.loc[[n]][[2]])[1], 
