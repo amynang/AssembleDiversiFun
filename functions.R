@@ -1,3 +1,5 @@
+
+# to plot the trophic matrix
 heatweb <- function(mat) {
   heat <- mat %>% #na_if(., 0) %>% 
     as.data.frame() %>%
@@ -20,7 +22,8 @@ heatweb <- function(mat) {
   return(heat)
 }
 
-
+# to create communities of limited linkage similarity
+# edited from https://github.com/emilio-berti/assembly/blob/master/R/limiting_similarity_filtering.R
 bride_of_similarity_filtering <- function (sp.names, metaweb, t = 0, 
                                            method = "jaccard", stat = "mean", 
                                            max.iter = 1000) {
@@ -44,7 +47,8 @@ bride_of_similarity_filtering <- function (sp.names, metaweb, t = 0,
   return(new_sp)
 }
 
-
+# internal function of above, instead of throwing error uses a while loop to 
+# ensure no isolated species / components
 moov <- function (sp.names, metaweb, t = 0, method = "jaccard", stat = "mean") 
 {
   g <- graph_from_adjacency_matrix(metaweb[sp.names, sp.names])
@@ -88,7 +92,7 @@ moov <- function (sp.names, metaweb, t = 0, method = "jaccard", stat = "mean")
 }
 
 
-
+# to generate the plant competition matrix
 competition <- function(lower=.8, upper=1, plants) { 
   # create competition matrix
   alpha = matrix(NA, plants, plants)
