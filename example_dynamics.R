@@ -69,7 +69,6 @@ competition <- function(lower=.8, upper=1, plants) {
   return(alpha)
 }
 
-
 model_scaled$alpha = competition(.6,.8,plants)
 #diag(model_scaled$alpha) = .8
 
