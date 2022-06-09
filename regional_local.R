@@ -218,13 +218,13 @@ for (m in 2:length(reg.loc)) {
   # add competition matrices
   # lower upper values specify **intraspecific** competition
   # interspecific for each plant then sums to 1-intraspesific
-  reg.loc[[m]][[3]] = competition(lower = .8, upper = 1, plants) #low inter-
-  reg.loc[[m]][[4]] = competition(lower = .6, upper = .8, plants) #high inter-
+  reg.loc[[m]][[3]] = competition(lower = .6, upper = .8, plants) #high inter-
+  reg.loc[[m]][[4]] = competition(lower = .8, upper = .1, plants) #low inter-
 }
 
 
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220526.RData")
+saveRDS(reg.loc, file="reg.loc_20220609.RData")
 
 reg.loc = readRDS("reg.loc_20220506.RData")
 
