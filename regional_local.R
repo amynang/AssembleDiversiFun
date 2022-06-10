@@ -212,6 +212,7 @@ for (m in 2:length(reg.loc)) {
 
 # for each early-late pair, add a matrix of high interspecific 
 # and a matrix of low interspecific competition
+set.seed(321)
 for (m in 2:length(reg.loc)) {
   # number of plant species
   plants = length(grep("plant", colnames(reg.loc[[m]][[1]])))
@@ -219,7 +220,7 @@ for (m in 2:length(reg.loc)) {
   # lower upper values specify **intraspecific** competition
   # interspecific for each plant then sums to 1-intraspesific
   reg.loc[[m]][[3]] = competition(lower = .6, upper = .8, plants) #high inter-
-  reg.loc[[m]][[4]] = competition(lower = .8, upper = .1, plants) #low inter-
+  reg.loc[[m]][[4]] = competition(lower = .8, upper = 1, plants) #low inter-
 }
 
 

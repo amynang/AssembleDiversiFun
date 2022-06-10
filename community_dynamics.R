@@ -3,7 +3,7 @@ library(tidyverse)
 library(ATNr)
 set.seed(321)
 
-reg.loc = readRDS("reg.loc_20220526.RData")
+reg.loc = readRDS("reg.loc_20220609.RData")
 # the first element of the list contains two objects:
 # the interaction matrix of the regional meta-foodweb
 # and the vector of bodymasses of the regional species
@@ -89,7 +89,10 @@ for (i in 2:length(reg.loc)) { # for each food-web
 # save to working directory
 saveRDS(results, file="results_20220609.RData")
 
-
+for (i in 2:ncol(results[[1]][[1]])) {
+  
+  
+}
 
 colnames(soll) = c("time",
                    # paste0("nut_",1:2),
