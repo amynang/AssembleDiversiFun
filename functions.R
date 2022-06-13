@@ -100,8 +100,10 @@ competition <- function(lower=.8, upper=1, plants) {
   diag(alpha) = runif(plants, lower,upper)
   # draw off diagonals so that columns sum to 1
   for (i in 1:plants) {
-    # replace NAs in each column with values that sum to the complement of that diagonal
-    alpha[which(is.na(alpha[,i])),i] = (1-diag(alpha)[i])*brms::rdirichlet(1,rep(2,(plants-1)))
+    # replace NAs in each row! with values that sum to the complement of that diagonal
+    alpha[i, which(is.na(alpha[i,]))] = (1-diag(alpha)[i])*brms::rdirichlet(1,rep(2,(plants-1)))
+    
+    
   }
   return(alpha)
 }
