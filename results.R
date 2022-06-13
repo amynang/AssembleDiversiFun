@@ -1,43 +1,127 @@
+library(tidyverse)
 
-w = 16
+
+results = readRDS("results_20220609.RData")
+
+w = 1
 outflux = results[[w]][[2]]$F#[i,j]
 outflux[,] = NA
 for (i in 1:nrow(results[[w]][[2]]$F)) {
   for (j in 1:ncol(results[[w]][[2]]$F)) {
     
-    outflux[i,j] = (results[[w]][[2]]$X[j]* #mass specific metabolic rate
-                    results[[w]][[2]]$max_feed[16+j]* # maximum feeding rate rel. to met. rate
-                    results[[w]][[1]][201,16+j]* # biomass at last time-step
+    outflux[i,j] = (results[[w]][[2]]$X[2+j]* #mass specific metabolic rate
+                    results[[w]][[2]]$max_feed[j]* # maximum feeding rate rel. to met. rate
+                    results[[w]][[1]][201,3+j]* # biomass at last time-step
                     results[[w]][[2]]$F[i,j])/ # functional responses at last timestep
-                    results[[w]][[2]]$e[j] # assimilation efficiency
+                    results[[w]][[2]]$e[i] # assimilation efficiency
   }
 }
-colnames(outflux) = colnames(results[[w]][[1]])[-(1:17)]
+colnames(outflux) = colnames(results[[w]][[1]])[-(1:3)]
 rownames(outflux) = colnames(results[[w]][[1]])[-1]
 which(colSums(outflux)==0)
-sum(outflux[1:16,],na.rm = T)
+sum(outflux[1:2,],na.rm = T)
 
 
-results[[w]][[1]][201,2:3]
-View(results[[w]][[1]])
-
-i=16
-properties = vector(mode = "list", length = length(results))
-for (i in 1:length(results)) {
-  properties[[i]]$scenario = NA
-  
-  properties[[i]]$plant.rich = length(grep("plant", colnames(results[[i]][[1]])))
-  
-  properties[[i]]$plant.end = length(which(results[[i]][[1]][201, grep("plant", colnames(results[[i]][[1]]))]>1e-6))
-  
-  properties[[i]]$animals.end = length(which(results[[i]][[1]][201, grep("herb|omn|pred", colnames(results[[i]][[1]]))]>1e-6))
-  
-  properties[[i]]$plant.biomass = sum(results[[i]][[1]][201, 1+which(results[[i]][[1]][201, grep("plant", colnames(results[[i]][[1]]))]>1e-6)])
-  
-  properties[[i]]$animal.biomass = sum(results[[i]][[1]][201, 1 + length(grep("plant", colnames(results[[i]][[1]]))) +
-                                                           which(results[[i]][[1]][201, grep("herb|omn|pred", colnames(results[[i]][[1]]))]>1e-6)])
+plant.growth = vector(mode = "numeric", dim(results[[w]][[2]]$alpha)[1])
+for (i in 1:dim(results[[w]][[2]]$alpha)[1]) {
+  for (j in 1:dim(results[[w]][[2]]$alpha)[1]) {
+    plant.growth[i] = 1 - (results[[w]][[2]]$alpha[i,j]*
+                           results[[w]][[1]][201,1+j]/
+                           results[[w]][[2]]$K)
+  }
+}
+plant.prod = vector(mode = "numeric", dim(results[[w]][[2]]$alpha)[1])
+for (i in 1:dim(results[[w]][[2]]$alpha)[1]) {
+  plant.prod[i] = results[[w]][[2]]$r[i]*
+                  plant.growth[i]*
+                  results[[w]][[1]][201,1+i]
   
 }
+
+
+
+w=1
+properties = vector(mode = "list", length = length(results))
+for (i in 1:length(results)) {
+  properties[[w]]$scenario = NA
+  
+  properties[[w]]$plant.rich = length(grep("plant", colnames(results[[w]][[1]])))
+  
+  properties[[w]]$plant.end = length(which(results[[w]][[1]][201, grep("plant", colnames(results[[w]][[1]]))]>1e-6))
+  
+  properties[[w]]$animals.end = length(which(results[[w]][[1]][201, grep("herb|omn|pred", colnames(results[[w]][[1]]))]>1e-6))
+  
+  properties[[w]]$plant.biomass = sum(results[[w]][[1]][201, 1+which(results[[w]][[1]][201, grep("plant", colnames(results[[w]][[1]]))]>1e-6)])
+  
+  properties[[w]]$animal.biomass = sum(results[[w]][[1]][201, 1 + length(grep("plant", colnames(results[[w]][[1]]))) +
+                                                           which(results[[w]][[1]][201, grep("herb|omn|pred", colnames(results[[w]][[1]]))]>1e-6)])
+  
+  # calculate growth rate for each plant species
+  plant.growth = vector(mode = "numeric", dim(results[[w]][[2]]$alpha)[1])
+  for (i in 1:dim(results[[w]][[2]]$alpha)[1]) {
+    for (j in 1:dim(results[[w]][[2]]$alpha)[1]) {
+      plant.growth[i] = 1 - (results[[w]][[2]]$alpha[i,j]* # competition from species j
+                             results[[w]][[1]][201,1+j]/   # biomass of species j
+                             results[[w]][[2]]$K)          # carrying capacity of species i
+    }
+  }
+  #calculate plant productivity for each plant species
+  plant.prod = vector(mode = "numeric", dim(results[[w]][[2]]$alpha)[1])
+  for (i in 1:dim(results[[w]][[2]]$alpha)[1]) {
+    plant.prod[i] = results[[w]][[2]]$r[i]*
+                    plant.growth[i]*
+                    results[[w]][[1]][201,1+i]
+  }
+  
+  properties[[w]]$primary.productivity = sum(plant.prod)
+  
+  # calculate the energy that flows out of each resource (row) for each consumer (column)
+  outflux = results[[w]][[2]]$F
+  outflux[,] = NA
+  for (i in 1:nrow(results[[w]][[2]]$F)) {
+    for (j in 1:ncol(results[[w]][[2]]$F)) {
+      
+      outflux[i,j] = (results[[w]][[2]]$X[properties[[w]]$plant.rich + j]*   # mass specific metabolic rate of consumer j
+                      results[[w]][[2]]$max_feed[j]*                         # maximum feeding rate rel. to met. rate
+                      results[[w]][[1]][201,1+properties[[w]]$plant.rich+j]* # biomass of cons. j at last time-step
+                      results[[w]][[2]]$F[i,j])/                             # functional responses at last timestep
+                      results[[w]][[2]]$e[i]                                 # prey i assimilation efficiency
+    }
+  }
+  colnames(outflux) = colnames(results[[w]][[1]])[-(1:(1+properties[[w]]$plant.rich))]
+  rownames(outflux) = colnames(results[[w]][[1]])[-1]
+  
+  # calculate the energy that flows into each consumer (column) from each resource
+  influx = results[[w]][[2]]$F
+  influx[,] = NA
+  for (i in 1:nrow(results[[w]][[2]]$F)) {
+    for (j in 1:ncol(results[[w]][[2]]$F)) {
+      
+      influx[i,j] = (results[[w]][[2]]$X[properties[[w]]$plant.rich + j]*   # mass specific metabolic rate of consumer j
+                     results[[w]][[2]]$max_feed[j]*                         # maximum feeding rate rel. to met. rate
+                     results[[w]][[1]][201,1+properties[[w]]$plant.rich+j]* # biomass of cons. j at last time-step
+                     results[[w]][[2]]$F[i,j])                              # functional responses at last timestep
+    }
+  }
+  colnames(influx) = colnames(results[[w]][[1]])[-(1:(1+properties[[w]]$plant.rich))]
+  rownames(influx) = colnames(results[[w]][[1]])[-1]
+  
+  #,na.rm = T
+  
+  # herbivory control, measured as the ratio of outflows to inflows for herbivores
+  properties[[w]]$herbivory.control = sum(outflux[grep("herb", rownames(outflux)), ])/
+                                      sum( influx[ , grep("herb", colnames(influx))])
+  
+  # herbivory pressure, measured as total outflux from plants (incl. omnivores), per unit biomass
+  properties[[w]]$herbivory.pressure = sum(outflux[1:properties[[w]]$plant.rich,])/ 
+                                       properties[[w]]$plant.biomass
+  
+  # herbivore pressure, measured as total outflux from plants to herbivores, per unit biomass
+  properties[[w]]$herbivore.pressure = sum(outflux[ , grep("herb", colnames(outflux))])/ 
+                                       properties[[w]]$plant.biomass
+  
+}
+
 porprties = do.call(rbind.data.frame, properties)
 porprties[  seq(1, nrow(porprties), 4),1] = "early_early"
 porprties[1+seq(1, nrow(porprties), 4),1] = "early_late"
