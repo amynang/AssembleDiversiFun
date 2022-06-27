@@ -93,7 +93,10 @@ moov <- function (sp.names, metaweb, t = 0, method = "jaccard", stat = "mean")
 
 
 # to generate the plant competition matrix
-competition <- function(lower=.8, upper=1, plants) { 
+
+# competition experienced by each species sums to 1
+# overestimates richness-productivity relationship
+competition.1 <- function(lower=.8, upper=1, plants) { 
   # create competition matrix
   alpha = matrix(NA, plants, plants)
   # draw diagonals from (lower, upper)
@@ -102,8 +105,22 @@ competition <- function(lower=.8, upper=1, plants) {
   for (i in 1:plants) {
     # replace NAs in each row! with values that sum to the complement of that diagonal
     alpha[i, which(is.na(alpha[i,]))] = (1-diag(alpha)[i])*brms::rdirichlet(1,rep(2,(plants-1)))
-    
-    
   }
+  return(alpha)
+}
+
+# competition experienced by each species sums to N = number of plant species
+# assumes nutrient availability is independent of plant richness
+competition.N <- function(lower=.8, upper=1, plants) { 
+  # create competition matrix
+  alpha = matrix(NA, plants, plants)
+  # draw diagonals from (lower, upper)
+  diag(alpha) = runif(plants, lower,upper)
+  # draw off diagonals so that columns sum to 1
+  for (i in 1:plants) {
+    # replace NAs in each row! with values that sum to the complement of that diagonal
+    alpha[i, which(is.na(alpha[i,]))] = (1-diag(alpha)[i])*brms::rdirichlet(1,rep(2,(plants-1)))
+  }
+  alpha = alpha*plants
   return(alpha)
 }
