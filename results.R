@@ -4,7 +4,7 @@ library(tidyverse)
 results = readRDS("results_20220705_N_2022.RData")
 
 
-soll = as.data.frame(results[[16]][[1]])
+soll = as.data.frame(results[[98]][[1]])
 # colnames(soll) = c("time",
 #                    # paste0("nut_",1:2),
 #                    colnames(reg.loc[[n]][[s]]))
@@ -65,8 +65,8 @@ for (w in 1:length(results)) {
   
   # turn biomass of extinct species to 0
   results[[w]][[1]][t.end,] = ifelse(results[[w]][[1]][t.end,]<=1e-6, 
-                                   0, 
-                                   results[[w]][[1]][t.end,])
+                                     0, 
+                                     results[[w]][[1]][t.end,])
   properties[[w]]$scenario = NA
   
   properties[[w]]$plant.rich = length(grep("plant", colnames(results[[w]][[1]])))
@@ -111,32 +111,41 @@ for (w in 1:length(results)) {
   
   properties[[w]]$primary.productivity = sum(plant.prod)
   
-  # calculate the energy that flows out of each resource (row) for each consumer (column)
+  
+  # which cells in the functional responce matrix F[species,consumers] are non zero
+  ind = which(results[[w]][[2]]$F[,] != 0, arr.ind = T)
+  # create an empty (0) matrix with dimensions as the F matrix
   outflux = results[[w]][[2]]$F
-  outflux[,] = NA
-  for (i in 1:nrow(results[[w]][[2]]$F)) {
-    for (j in 1:ncol(results[[w]][[2]]$F)) {
+  outflux[,] = 0
+  
+  if (nrow(ind)>0) { # this can occur if all plants are extinct
+    for (i in 1:nrow(ind)) { # for all non-zero cells
       
-      outflux[i,j] = (results[[w]][[2]]$X[properties[[w]]$plant.rich + j]*   # mass specific metabolic rate of consumer j
-                      results[[w]][[2]]$max_feed[j]*                         # maximum feeding rate rel. to met. rate
-                      results[[w]][[1]][t.end,1+properties[[w]]$plant.rich+j]* # biomass of cons. j at last time-step
-                      results[[w]][[2]]$F[i,j])                              # functional responses at last timestep
+      # calculate the energy that flows out of the resource (row) to the consumer (column)
+      flux = results[[w]][[2]]$X[properties[[w]]$plant.rich + ind[i,][2]]*     # mass specific metabolic rate of consumer j
+             results[[w]][[2]]$max_feed[ind[i,][2]]*                           # maximum feeding rate rel. to met. rate
+             results[[w]][[1]][t.end,1+properties[[w]]$plant.rich+ind[i,][2]]* # biomass of cons. j at last time-step
+             results[[w]][[2]]$F[ind[i,][1],ind[i,][2]]                        # functional responce at last time-step
+      
+      outflux[ind[i,][1],ind[i,][2]] = flux
+      
     }
-  }
+  } 
   colnames(outflux) = colnames(results[[w]][[1]])[-(1:(1+properties[[w]]$plant.rich))]
   rownames(outflux) = colnames(results[[w]][[1]])[-1]
   
   # calculate the energy that flows into each consumer (column) from each resource
   influx = results[[w]][[2]]$F
-  influx[,] = NA
-  for (i in 1:nrow(results[[w]][[2]]$F)) {
-    for (j in 1:ncol(results[[w]][[2]]$F)) {
+  influx[,] = 0
+  
+  if (nrow(ind)>0) { 
+    for (i in 1:nrow(ind)) { 
       
-      influx[i,j] = (results[[w]][[2]]$X[properties[[w]]$plant.rich + j]*   # mass specific metabolic rate of consumer j
-                     results[[w]][[2]]$max_feed[j]*                         # maximum feeding rate rel. to met. rate
-                     results[[w]][[1]][t.end,1+properties[[w]]$plant.rich+j]* # biomass of cons. j at last time-step
-                     results[[w]][[2]]$F[i,j])*                             # functional responses at last timestep
-                     results[[w]][[2]]$e[i]                                 # prey i assimilation efficiency
+      flux = outflux[ind[i,][1],ind[i,][2]]*
+             results[[w]][[2]]$e[ind[i,][1]]  # prey i assimilation efficiency
+      
+      influx[ind[i,][1],ind[i,][2]] = flux
+      
     }
   }
   colnames(influx) = colnames(results[[w]][[1]])[-(1:(1+properties[[w]]$plant.rich))]
@@ -164,7 +173,7 @@ properties[1+seq(1, nrow(properties), 4),1] = "high for animals - low for plants
 properties[2+seq(1, nrow(properties), 4),1] = "low for animals - high for plants"
 properties[3+seq(1, nrow(properties), 4),1] = "low for animals - low for plants"
 properties$scenario = as.factor(properties$scenario)
-properties$ID = as.factor(rep(1:4000, each = 4))
+properties$ID = as.factor(rep(1:1000, each = 4))
 
 saveRDS(properties, file="properties_20220708_N_321_3000.RData")
 
@@ -182,13 +191,48 @@ ggplot(properties, aes(x = log2(plant.rich), y=animal.biomass, color = scenario)
                      position = position_dodge(width = .9)) +
   theme_modern()
 
-ggplot(properties, aes(x = log2(plant.rich), y=plant.end/plant.rich, color = scenario)) +
+ggplot(properties[which(properties$plant.end!=0),], 
+       aes(x = log2(plant.rich), 
+           y=plant.end/plant.rich, 
+           color = scenario)) +
+  geom_point(aes(colour = scenario), 
+             position = position_dodge(width = .9)) +
+  stat_summary(fun = "mean",
+               position = position_dodge(width = .9))
   stat_pointinterval(aes(colour = scenario),
                      point_interval = "mean_qi",
                      position = position_dodge(width = .9)) +
   theme_modern()
   #geom_point(position = position_dodge(width = .9))
 
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y=animals.end/40, 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9))  
+  
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y=plant.end/plant.rich, 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9)) 
+  
 ggplot(properties, aes(x = log2(plant.rich), y=animals.end/60, color = scenario)) +
   stat_pointinterval(aes(colour = scenario),
                      point_interval = "mean_qi",
@@ -196,8 +240,8 @@ ggplot(properties, aes(x = log2(plant.rich), y=animals.end/60, color = scenario)
   theme_modern()
 
 ggplot(properties[which(properties$plant.end!=0),], 
-       aes(x = log2(plant.rich), y=plant.biomass, color = scenario)) +
-  geom_point() +
+       aes(x = log2(plant.end), y=plant.biomass, color = scenario)) +
+  geom_point(alpha = .1) +
   geom_smooth(method = "lm", formula = y ~ x) +
   #facet_wrap(~ scenario) +
   theme_modern()
