@@ -102,7 +102,7 @@ L[inds] = as.integer(rbernoulli(length(inds),.7))*L[inds]
 colSums(vegan::decostand(L[,(dim1+1):1000],"pa"))
 min(colSums(vegan::decostand(L[,(dim1+1):1000],"pa")))
 # marvel at the glory of your creation
-show_fw(vegan::decostand(L,"pa"))
+#show_fw(vegan::decostand(L,"pa"))
 
 
 # species names are 0000group000 where 0000 is the index of the species (relates to bodymass) group is
@@ -116,7 +116,7 @@ rownames(L) = colnames(L)
 
 L = as.matrix(L)
 
-heatweb(L)
+#heatweb(L)
 
 
 
@@ -219,15 +219,15 @@ for (m in 2:length(reg.loc)) {
   # add competition matrices
   # lower upper values specify **intraspecific** competition
   # interspecific for each plant then sums to 1-intraspesific
-  reg.loc[[m]][[3]] = competition(lower = .6, upper = .8, plants) #high inter-
-  reg.loc[[m]][[4]] = competition(lower = .8, upper = 1, plants) #low inter-
+  reg.loc[[m]][[3]] = competition.N(lower = .5, upper = .6, plants) #high inter-
+  reg.loc[[m]][[4]] = competition.N(lower = .9, upper = 1, plants) #low inter-
 }
 
 
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220609.RData")
+saveRDS(reg.loc, file="reg.loc_20220709_N_in.RData")
 
-reg.loc = readRDS("reg.loc_20220506.RData")
+reg.loc = readRDS("reg.loc_20220622.RData")
 
 show_fw(vegan::decostand(local_early[[4]],"pa"), title = "L-matrix model food web")
 show_fw(vegan::decostand(local_late[[4]],"pa"), title = "L-matrix model food web")
