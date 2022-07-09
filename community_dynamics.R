@@ -3,7 +3,8 @@ library(tidyverse)
 library(ATNr)
 set.seed(321)
 
-reg.loc = readRDS("reg.loc_20220609.RData")
+reg.loc = readRDS("reg.loc_20220622_N.RData")
+
 # the first element of the list contains two objects:
 # the interaction matrix of the regional meta-foodweb
 # and the vector of bodymasses of the regional species
@@ -58,11 +59,14 @@ for (i in 2:length(reg.loc)) { # for each food-web
       # change W so that unlike Delmas, generalists are as efficient as specialists
       #model_scaled$w = vegan::decostand(model_scaled$w,"pa")
       
+      # reduce interference competition
+      #model_scaled$c = rep(.3,60)
+      
       # plant competition scenario
       model_scaled$alpha = reg.loc[[i]][[k]]
       
       # timesteps
-      times <- seq(0, 1000, by = 5)
+      times <- seq(0, 3000, by = 5)
       # solve
       sol <- lsoda_wrapper(times, biomasses, model_scaled, verbose = FALSE)
       soll = as.data.frame(sol)
@@ -72,7 +76,7 @@ for (i in 2:length(reg.loc)) { # for each food-web
       # for each foodweb save biomass changes and parameters at last timestep
       results[[length(results)+1]] = vector(mode = "list")
       results[[length(results)]][[1]] = soll
-      results[[length(results)]][[2]] = model_scaled
+      results[[length(results)]][[2]] = as.list(model_scaled)
       
       #print(sum(soll[201,-1]))
     }
@@ -87,7 +91,7 @@ for (i in 2:length(reg.loc)) { # for each food-web
 
 
 # save to working directory
-saveRDS(results, file="results_20220609.RData")
+saveRDS(results, file="results_20220708_N_321_3000.RData")
 
 for (i in 2:ncol(results[[1]][[1]])) {
   
