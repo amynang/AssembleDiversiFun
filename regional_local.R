@@ -158,7 +158,7 @@ for (k in 1:1000) {
     
     while(TRUE){ # while loop skips communities with isolated components
       # sample n=j local consumers from the regional pool
-      local_consumers = sample(colnames(fw)[(n_basal+1):n_species], 60) %>% 
+      local_consumers = sample(colnames(fw)[(n_basal+1):n_species], 40) %>% 
         sort()
       # sample n=i local producers from the regional pool
       local_producers = sample(colnames(fw)[1:n_basal], i) %>% 
@@ -221,11 +221,13 @@ for (m in 2:length(reg.loc)) {
   # interspecific for each plant then sums to 1-intraspesific
   reg.loc[[m]][[3]] = competition.N(lower = .5, upper = .6, plants) #high inter-
   reg.loc[[m]][[4]] = competition.N(lower = .9, upper = 1, plants) #low inter-
+  reg.loc[[m]][[5]] = reg.loc[[m]][[4]]
+  diag(reg.loc[[m]][[5]]) = diag(reg.loc[[m]][[3]])
 }
 
 
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220709_N_in.RData")
+saveRDS(reg.loc, file="reg.loc_20220709_N_40.RData")
 
 reg.loc = readRDS("reg.loc_20220622.RData")
 

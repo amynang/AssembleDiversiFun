@@ -3,7 +3,7 @@ library(tidyverse)
 library(ATNr)
 set.seed(321)
 
-reg.loc = readRDS("reg.loc_20220622_N.RData")
+reg.loc = readRDS("reg.loc_20220721_N_40_comp.RData")
 
 # the first element of the list contains two objects:
 # the interaction matrix of the regional meta-foodweb
@@ -33,9 +33,9 @@ results = vector(mode = "list")
 
 for (i in 2:length(reg.loc)) { # for each food-web
   for (j in 1:2) { # random or dissimilar consumers
-    for (k in 3:4) { # high or low interspecific plant competition
+    for (k in 3:5) { # high or low interspecific plant competition
       # we draw random starting biomasses from U(2,3)
-      biomasses <- runif(dim(reg.loc[[i]][[j]])[1], 2, 3)
+      biomasses <- runif(dim(reg.loc[[i]][[j]])[1], .02, .03)
       # number of species
       species = dim(reg.loc[[i]][[j]])[1]
       # number of basal species
@@ -54,6 +54,7 @@ for (i in 2:length(reg.loc)) { # for each food-web
                                           vegan::decostand(reg.loc[[i]][[j]],"pa")
       )
       
+      # set.seed(i) # so that food-webs in every group differ only in animal/plant competition
       model_scaled <- initialise_default_Scaled(model_scaled)
       model_scaled$initialisations()
       # change W so that unlike Delmas, generalists are as efficient as specialists
@@ -66,7 +67,7 @@ for (i in 2:length(reg.loc)) { # for each food-web
       model_scaled$alpha = reg.loc[[i]][[k]]
       
       # timesteps
-      times <- seq(0, 3000, by = 5)
+      times <- seq(0, 40000, by = 200)
       # solve
       sol <- lsoda_wrapper(times, biomasses, model_scaled, verbose = FALSE)
       soll = as.data.frame(sol)
@@ -79,6 +80,7 @@ for (i in 2:length(reg.loc)) { # for each food-web
       results[[length(results)]][[2]] = as.list(model_scaled)
       
       #print(sum(soll[201,-1]))
+      #print(max(Re(eigen(Joacobian(sol[nrow(sol), -1], model_scaled$ODE))$values)))
     }
   }
   
@@ -86,25 +88,25 @@ for (i in 2:length(reg.loc)) { # for each food-web
   #cat(paste0(round((m/1600)*100), '%'))
   cat(paste0(i, '/', length(reg.loc)-1))
   #Sys.sleep(.05)
-  if (i == length(reg.loc)-1) cat('- Done!')
+  if (i == length(reg.loc)-1) cat('- Done!')  # if (i == length(reg.loc)-1) cat('- Done!')
 }
 
 
 # save to working directory
-saveRDS(results, file="results_20220708_N_321_3000.RData")
+saveRDS(results, file="results_20220721_N_40_comp_40000.RData")
 
-for (i in 2:ncol(results[[1]][[1]])) {
-  
-  
-}
-
-colnames(soll) = c("time",
-                   # paste0("nut_",1:2),
-                   colnames(reg.loc[[n]][[s]]))
-
-solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
-solll$taxon = substr(solll$species, 6, 8)
-
-# plot results
-ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
-  geom_point() 
+# for (i in 2:ncol(results[[1]][[1]])) {
+#   
+#   
+# }
+# 
+# colnames(soll) = c("time",
+#                    # paste0("nut_",1:2),
+#                    colnames(reg.loc[[n]][[s]]))
+# 
+# solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
+# solll$taxon = substr(solll$species, 6, 8)
+# 
+# # plot results
+# ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
+#   geom_point() 
