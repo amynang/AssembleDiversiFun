@@ -1,20 +1,20 @@
 library(tidyverse)
 
 
-results = readRDS("results_20220705_N_2022.RData")
+results = readRDS("results_20220721_N_40_comp_40000.RData")
 
 
-soll = as.data.frame(results[[98]][[1]])
-# colnames(soll) = c("time",
-#                    # paste0("nut_",1:2),
-#                    colnames(reg.loc[[n]][[s]]))
-
-solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
-solll$taxon = substr(solll$species, 6, 8)
-
-# plot results
-ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
-  geom_point() 
+# soll = as.data.frame(results[[36]][[1]])
+# # colnames(soll) = c("time",
+# #                    # paste0("nut_",1:2),
+# #                    colnames(reg.loc[[n]][[s]]))
+# 
+# solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
+# solll$taxon = substr(solll$species, 6, 8)
+# 
+# # plot results
+# ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
+#   geom_point() 
 
 
 
@@ -59,9 +59,9 @@ ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
 # w=1
 properties = vector(mode = "list", length = length(results))
 
-t.end = 601
+t.end = 201
 
-for (w in 1:length(results)) {
+for (w in 21619:length(results)) {
   
   # turn biomass of extinct species to 0
   results[[w]][[1]][t.end,] = ifelse(results[[w]][[1]][t.end,]<=1e-6, 
@@ -165,6 +165,13 @@ for (w in 1:length(results)) {
   properties[[w]]$herbivore.pressure = sum(outflux[ , grep("herb", colnames(outflux))])/ 
                                        properties[[w]]$plant.biomass
   
+  
+  
+  cat('\014')
+  #cat(paste0(round((m/1600)*100), '%'))
+  cat(paste0(w, '/', length(results)))
+  #Sys.sleep(.05)
+  if (w == length(results)) cat('- Done!')
 }
 beepr::beep(9)
 properties = do.call(rbind.data.frame, properties)
@@ -173,13 +180,30 @@ properties[1+seq(1, nrow(properties), 4),1] = "high for animals - low for plants
 properties[2+seq(1, nrow(properties), 4),1] = "low for animals - high for plants"
 properties[3+seq(1, nrow(properties), 4),1] = "low for animals - low for plants"
 properties$scenario = as.factor(properties$scenario)
-properties$ID = as.factor(rep(1:1000, each = 4))
+properties$ID = as.factor(rep(1:4000, each = 4))
 
-saveRDS(properties, file="properties_20220708_N_321_3000.RData")
+saveRDS(properties, file="properties_20220721_N_40_comp_40000cont.RData")
 
-properties = readRDS("properties_20220623.RData")
+properties1 = readRDS("properties_20220721_N_40_comp_40000.RData")
+properties2 = readRDS("properties_20220721_N_40_comp_40000cont.RData")
 
-properties = readRDS("properties_20220623_N.RData")
+properties1 = properties1[1:21618]
+properties1 = do.call(rbind.data.frame, properties1)
+
+properties2 = properties2[21619:24000]
+properties2 = do.call(rbind.data.frame, properties2)
+
+properties = rbind(properties1,properties2)
+
+properties[  seq(1, nrow(properties), 6),1] = "high for animals - high inter for plants"
+properties[1+seq(1, nrow(properties), 6),1] = "high for animals - high intra for plants"
+properties[2+seq(1, nrow(properties), 6),1] = "high for animals - low for plants"
+properties[3+seq(1, nrow(properties), 6),1] = "low for animals - high inter for plants"
+properties[4+seq(1, nrow(properties), 6),1] = "low for animals - high intra for plants"
+properties[5+seq(1, nrow(properties), 6),1] = "low for animals - low for plants"
+
+properties$scenario = as.factor(properties$scenario)
+properties$ID = as.factor(rep(1:4000, each = 6))
 
 which(properties$plant.end==0)
 length(which(properties$plant.end==0))
@@ -225,13 +249,121 @@ ggplot(properties[which(properties$plant.end!=0),],
              color = scenario)) +
     geom_point(aes(fill = scenario), alpha = .1,
                position = position_jitterdodge(dodge.width = .9)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
     stat_summary(fun = "mean",
                  geom = "point",
                  size = 4,
                  shape = 21,
                  aes(fill = scenario),
                  color = "black",
-                 position = position_dodge(width = .9)) 
+                 position = position_dodge(width = .9)) +
+    theme_modern()
+  
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y = log(omn.end/pred.end), 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9)) +
+    theme_modern()
+ 
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y = log(omn.biomass/pred.biomass), 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9)) +
+    theme_modern()
+  
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = as.factor(log2(plant.rich)), 
+             y = log(omn.end/pred.end), 
+             color = scenario)) +
+    geom_violinhalf(aes(color = scenario),
+                    position = position_dodge(width = .8)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 1,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .8)) +
+    theme_modern()
+  
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y = log(herb.end/(omn.end+pred.end)), 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9)) +
+    theme_modern() 
+  
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y = log(herb.biomass/(omn.biomass+pred.biomass)), 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9)) +
+    theme_modern()
+  
+  ggplot(properties[which(properties$plant.end!=0),], 
+         aes(x = log2(plant.rich), 
+             y = log10(herbivory.control), 
+             color = scenario)) +
+    geom_point(aes(fill = scenario), alpha = .1,
+               position = position_jitterdodge(dodge.width = .9)) +
+    geom_vline(xintercept = c(1.5,2.5,3.5), 
+               linetype = "dashed") +
+    stat_summary(fun = "mean",
+                 geom = "point",
+                 size = 4,
+                 shape = 21,
+                 aes(fill = scenario),
+                 color = "black",
+                 position = position_dodge(width = .9)) +
+    theme_modern()
+  
+  
+  
   
 ggplot(properties, aes(x = log2(plant.rich), y=animals.end/60, color = scenario)) +
   stat_pointinterval(aes(colour = scenario),
@@ -245,6 +377,14 @@ ggplot(properties[which(properties$plant.end!=0),],
   geom_smooth(method = "lm", formula = y ~ x) +
   #facet_wrap(~ scenario) +
   theme_modern()
+
+ggplot(properties[which(properties$plant.end!=0),], 
+       aes(x = log2(plant.end), y=primary.productivity, color = scenario)) +
+  geom_point(alpha = .1) +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  #facet_wrap(~ scenario) +
+  theme_modern()
+
 
 ggplot(properties[which(properties$plant.end!=0),], 
        aes(x = log2(plant.rich), y=animal.biomass, color = scenario)) +
@@ -266,7 +406,7 @@ ggplot(properties[which(properties$plant.end!=0),],
 ############################# PRIMARY PRODUCTIVITY #############################
 
 ggplot(properties[which(properties$plant.end!=0),], 
-       aes(x = log2(plant.rich), 
+       aes(x = log2(plant.end), 
            y = primary.productivity, 
            color = scenario)) +
   geom_point(alpha = .2, size = 3) +
@@ -299,11 +439,11 @@ ggplot(properties[which(properties$plant.end!=0),],
 
 
 ggplot(properties[which(properties$plant.end!=0),], 
-       aes(x = log10(herbivory.control + 1e-9), 
-           y = log10(primary.productivity), 
+       aes(x = log(herbivory.control + 1e-9), 
+           y = (primary.productivity), 
            color = as.factor(plant.rich))) +
   geom_point(alpha = .5) +
-  geom_smooth(method = "lm", formula = y ~ x) +
+  #geom_smooth(method = "lm", formula = y ~ x) +
   facet_wrap(~scenario) +
   #stat_pointinterval(aes(colour = scenario),
   #                   point_interval = "mean_qi",
@@ -460,12 +600,12 @@ ggplot(properties[which(properties$plant.end!=0 & properties$herbivory.control!=
        color = "n plants")
 
 ggplot(properties[which(properties$plant.end!=0 & properties$herbivory.control!=Inf),] %>% arrange(plant.end), 
-       aes(x = log2(plant.end), 
+       aes(x = log2(plant.rich), 
            y = log10(herbivory.control + 1e-9), 
            color = scenario)) +
-  geom_point(alpha = .3, size = 3) +
-  geom_smooth(method = "lm", formula = y ~ x# + I(x^2)
-    #,color = "#EC9706"
+  geom_point(alpha = .1, size = 3, position = position_jitter(.3)) +
+  geom_smooth(method = "lm", formula = y ~ x #+ I(x^2)
+    ,se = F#,color = "#EC9706"
   ) +
   #geom_vline(xintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 0, linetype = "dashed") +
@@ -476,6 +616,19 @@ ggplot(properties[which(properties$plant.end!=0 & properties$herbivory.control!=
   labs(y = "Herbivore control \n (Log-ratio of outflows/inflows for herbivores)",
        x = "Plant richness",
        color = "n plants")
+
+ggplot(properties[which(properties$plant.end!=0),], 
+       aes(x = (plant.end), 
+           y=log10(herbivory.control + 1e-9), 
+           color = scenario)) +
+  geom_point(aes(fill = scenario), alpha = .1) +
+  stat_summary(fun = "mean",
+               geom = "point",
+               size = 4,
+               shape = 21,
+               aes(fill = scenario),
+               color = "black", alpha = .9,
+               position = position_dodge(width = .1)) 
 
 
 ################### Herbivore pressure ~ herbivore biomass #####################
@@ -639,3 +792,28 @@ summary(
 #)
 library(performance)
 check_model(m)
+
+
+
+
+
+jac = Joacobian(results[[1]][[1]][601,-1],
+                results[[1]][[2]]$ODE)
+
+
+
+set.seed(123)
+# first run a model to reach equilibrium
+masses <- runif(20, 10, 100) #body mass of species
+L <- create_Lmatrix(masses, 10, Ropt = 10)
+L[L > 0] <- 1
+mod <- create_model_Unscaled_nuts(20, 10, 3, masses, L)
+mod <- initialise_default_Unscaled_nuts(mod, L)
+biomasses <- masses ^ -0.75 * 10 ^ 4 #biomasses of species
+biomasses <- append(runif(3, 20, 30), biomasses)
+times <- seq(0, 100, 1)
+sol <- lsoda_wrapper(times, biomasses, mod)
+# get the final biomasses
+final.bioms = sol[nrow(sol), -1]
+# estimate jacobian
+Joacobian(final.bioms, mod$ODE)
