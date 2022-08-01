@@ -222,12 +222,12 @@ for (m in 2:length(reg.loc)) {
   reg.loc[[m]][[3]] = competition.N(lower = .5, upper = .6, plants) #high inter-
   reg.loc[[m]][[4]] = competition.N(lower = .9, upper = 1, plants) #low inter-
   reg.loc[[m]][[5]] = reg.loc[[m]][[4]]
-  diag(reg.loc[[m]][[5]]) = diag(reg.loc[[m]][[3]])
+  diag(reg.loc[[m]][[5]]) = diag(reg.loc[[m]][[3]]) # low overall
 }
 
 
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220709_N_40.RData")
+saveRDS(reg.loc, file="reg.loc_20220721_N_40_comp.RData")
 
 reg.loc = readRDS("reg.loc_20220622.RData")
 
