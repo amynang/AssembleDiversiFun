@@ -6,42 +6,116 @@ library(see) # for the half-violin
 library(scico) # for the palette
 #library(patchwork)
 library(cowplot)
+library(ATNr)
 
+source("functions.R")
+
+rlnormtrunc.intuitive = function(n, m, s, p=.95) {
+  trnc <- EnvStats::rlnormTrunc(n, 
+                                meanlog = log(m^2 / sqrt(s^2 + m^2)), 
+                                sdlog = sqrt(log(1 + (s^2 / m^2))), 
+                                min = qlnorm((1-p)/2, 
+                                             meanlog = log(m^2 / sqrt(s^2 + m^2)), 
+                                             sdlog = sqrt(log(1 + (s^2 / m^2)))), 
+                                max = qlnorm(1-(1-p)/2, 
+                                             meanlog = log(m^2 / sqrt(s^2 + m^2)), 
+                                             sdlog = sqrt(log(1 + (s^2 / m^2)))))
+  return(trnc)
+}
+heatweb <- function(mat) {
+  heat <- mat %>% #na_if(., 0) %>% 
+    as.data.frame() %>%
+    rownames_to_column("id") %>%
+    pivot_longer(-c(id), names_to = "species", values_to = "strength") %>%
+    mutate(species= fct_relevel(species,colnames(mat))) %>%
+    ggplot(aes(x=species, y=ordered(id, levels = rev(unique(id))), fill=strength)) + 
+    geom_raster() +
+    theme_void() +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          legend.position = "none") +
+    #scico::scale_fill_scico(palette = "lajolla")
+    #scale_fill_distiller(palette = "Spectral", direction = -1)
+    scale_fill_viridis_c(option = "inferno", direction = -1, begin = .2)
+  return(heat)
+}
+# set.seed(321)
+# 
+# # create dummy data
+# plant.niche <- data.frame(Succession = rep(c("Early","Late"),each=1e4),
+#                           species = rep(c("sp. 1", "sp. 2"),5e3))
+# 
+# # draw values from beta to simulate large and small niche overlap
+# plant.niche$niche[plant.niche$Succession=="Early" & 
+#                     plant.niche$species=="sp. 1"] = rbeta(5e3, 10,10) +.1
+# plant.niche$niche[plant.niche$Succession=="Early" & 
+#                     plant.niche$species=="sp. 2"] = rbeta(5e3, 10,10) -.1
+# plant.niche$niche[plant.niche$Succession=="Late" & 
+#                     plant.niche$species=="sp. 1"] = rbeta(5e3, 8,2)
+# plant.niche$niche[plant.niche$Succession=="Late" & 
+#                     plant.niche$species=="sp. 2"] = rbeta(5e3, 2,8)
+# 
+# # choose colours
+# scico(20, palette = 'bamako')
+# scales::show_col(scico(20, palette = 'bamako'))
+# 
+# pn = ggplot(plant.niche, aes(x = Succession, y=niche, fill = species)) +
+#   geom_violinhalf() +
+#   geom_hline(yintercept=c(.25, .75), linetype='dashed', color="grey") +
+#   theme_modern() +
+#   labs(title = ~bold("Niche differentiation")) +
+#   theme(  plot.title = element_text(size = 12, hjust = 0.5),
+#         axis.title.x = element_text(size = 10),
+#         axis.title.y = element_text(size = 10),
+#          axis.text.y = element_text(size = 10)) +
+#   labs(y = "Niche gradient") +
+#   scale_fill_manual(values=c("#36622C","#DAC051"))# + coord_fixed()
 
 set.seed(321)
+n = 1e4
 
-# create dummy data
-plant.niche <- data.frame(Succession = rep(c("Early","Late"),each=1e4),
-                          species = rep(c("sp. 1", "sp. 2"),5e3))
+comp = data.frame(scenario=rep(c("overlap","restriction","shift"),
+                               each = n*2),
+                  species = rep(rep(c("Sp.1","Sp.2"), each = n), 3),
+                  niche = NA)
+comp[comp$scenario == "overlap" & comp$species == "Sp.1", ]$niche =    rnorm(n, 0,1) + 1
+comp[comp$scenario == "overlap" & comp$species == "Sp.2", ]$niche =    rnorm(n, 0,1) - 1
+comp[comp$scenario == "restriction" & comp$species=="Sp.1", ]$niche = -rlnormtrunc.intuitive(n, 1.65,1.65) +3
+comp[comp$scenario == "restriction" & comp$species=="Sp.2", ]$niche = rlnormtrunc.intuitive(n, 1.65,1.65) -3
+comp[comp$scenario == "shift" & comp$species=="Sp.1", ]$niche =    rnorm(n, 0,1.5) + 3
+comp[comp$scenario == "shift" & comp$species=="Sp.2", ]$niche =    rnorm(n, 0,1.5) - 3
 
-# draw values from beta to simulate large and small niche overlap
-plant.niche$niche[plant.niche$Succession=="Early" & 
-                    plant.niche$species=="sp. 1"] = rbeta(5e3, 10,10) +.1
-plant.niche$niche[plant.niche$Succession=="Early" & 
-                    plant.niche$species=="sp. 2"] = rbeta(5e3, 10,10) -.1
-plant.niche$niche[plant.niche$Succession=="Late" & 
-                    plant.niche$species=="sp. 1"] = rbeta(5e3, 8,2)
-plant.niche$niche[plant.niche$Succession=="Late" & 
-                    plant.niche$species=="sp. 2"] = rbeta(5e3, 2,8)
+comp$scenario = factor(comp$scenario, levels = rev(c("overlap","restriction","shift")))
 
-# choose colours
-scico(20, palette = 'bamako')
-scales::show_col(scico(20, palette = 'bamako'))
-
-pn = ggplot(plant.niche, aes(x = Succession, y=niche, fill = species)) +
-  geom_violinhalf() +
-  geom_hline(yintercept=c(.25, .75), linetype='dashed', color="grey") +
+pn = ggplot(comp, aes(x=scenario,
+                      y=niche,
+                      fill=species))+
+  geom_violinhalf(position = "identity",
+                  trim = F,
+                  alpha = .75) +
+  #stat_summary(fun = "mean",
+  #             geom = "point",
+  #             size = 4,
+  #             shape = 21,
+  #             aes(fill = species),
+  #             color = "black") +
   theme_modern() +
-  labs(title = ~bold("Niche differenciation")) +
+  labs(title = ~bold("Plant niche differentiation")) +
   theme(  plot.title = element_text(size = 12, hjust = 0.5),
-        axis.title.x = element_text(size = 10),
-        axis.title.y = element_text(size = 10),
-         axis.text.y = element_text(size = 10)) +
-  labs(y = "Niche gradient") +
-  scale_fill_manual(values=c("#36622C","#DAC051"))# + coord_fixed()
-
-
-
+          axis.title.x = element_text(size = 10),
+          axis.title.y = element_text(size = 10),
+          axis.text.y = element_text(size = 10),
+          legend.position = "none",
+          plot.margin = unit(c(5.5, 6*5.5, 5.5, 5.5), "pt")) +
+  labs(y = "Niche gradient", 
+       x = "") +
+  coord_flip()+
+  scale_fill_manual(values=c("#36622C","#DAC051"))
+theme_modern()$plot.margin
 
 set.seed(321)
 vec = sort(rexp(1e3,.2), decreasing = T) + rnorm(1e3,0,1)
@@ -50,7 +124,7 @@ link.sim = data.frame(Linkage_Similarity = (vec - min(vec)) / (max(vec) - min(ve
 ls = ggplot(link.sim,aes(Iterations,Linkage_Similarity)) +
   geom_smooth(span = .3, se = FALSE, color="#8F403D")+
   theme_modern() +
-  labs(title = "How it is simulated") +
+  labs(title = ~bold("Animal niche differentiation")) +
   theme(plot.title = element_text(size = 12, hjust = 0.5),
         axis.title.x = element_text(size = 10),
         axis.title.y = element_text(size = 10),
@@ -58,8 +132,15 @@ ls = ggplot(link.sim,aes(Iterations,Linkage_Similarity)) +
          axis.text.y = element_text(size = 10)) +
   labs(y = "Linkage Similarity")# + coord_fixed(1e3)
 
-a.early = heatweb(competition(.5,.6, plants = 8)) + coord_fixed()
- a.late = heatweb(competition(.8, 1, plants = 8)) + coord_fixed()
+set.seed(321)
+overlap = heatweb(competition.N(.5,.6, plants = 8)) + coord_fixed()
+set.seed(321)
+constriction = heatweb(competition.N(.8, 1, plants = 8)) + coord_fixed()
+set.seed(321)
+expansion = competition.N(.8, 1, plants = 8)
+set.seed(321)
+diag(expansion) = diag(competition.N(.5,.6, plants = 8))
+expansion = heatweb(expansion) + coord_fixed()
 
 
 # # interaction matrix of the metacommunity
@@ -241,7 +322,7 @@ plot.regional <- function(species = 100) {
                                                  end = .8),
                                     3*species/4, replace = F)),
                     colour = "black",
-                    size = 3,
+                    size = 5,
                     shape = 21,
                     stroke = .5) +
     scale_edge_colour_manual(values=c("#7F7659","#B99B76")) +
@@ -290,8 +371,73 @@ local.fw <- function(producers = 8, consumers = 30) {
   
 }
 
+# similar links
+module1 <- function(producers = 2, consumers = 2) {
+  
+  # number of all species
+  species = consumers + producers
+  # matrix of coordinates
+  lay<-matrix(nrow=species,ncol=2)
+  lay[,1]<-c(1,2,2,1)
+  lay[,2]<-c(1,1,2,2)
+  
+  # plot
+  p <- ggraph::ggraph(igraph::graph_from_adjacency_matrix(matrix(c(0,0,1,1,
+                                                                   0,0,1,1,
+                                                                   0,0,0,0,
+                                                                   0,0,0,0),
+                                                                 ncol = 4),
+                                                          mode='undirected', diag=F),
+                      layout=lay)+
+    geom_edge_link(colour = "black",
+                   width = 2) +
+    geom_node_point(fill = c("#DAC051","#36622C",
+                             "#954B49","#B1A273"),
+                    colour = "black",
+                    size = 6,
+                    shape = 21,
+                    stroke = 2) +
+    theme(legend.position = 'none',
+          plot.margin = unit(c(0, 0, -4, 0), "cm")) +
+    theme_graph(background = "transparent") + 
+    coord_fixed(clip = "off")
+  return(p)
+  
+}
 
-
+# dissimilar links
+module2 <- function(producers = 2, consumers = 2) {
+  
+  # number of all species
+  species = consumers + producers
+  # matrix of coordinates
+  lay<-matrix(nrow=species,ncol=2)
+  lay[,1]<-c(1,2,2,1)
+  lay[,2]<-c(1,1,2,2)
+  
+  # plot
+  p <- ggraph::ggraph(igraph::graph_from_adjacency_matrix(matrix(c(0,0,0,1,
+                                                                   0,0,1,0,
+                                                                   0,0,0,0,
+                                                                   0,0,0,0),
+                                                                 ncol = 4),
+                                                          mode='undirected', diag=F),
+                      layout=lay)+
+    geom_edge_link(colour = "black",
+                   width = 2) +
+    geom_node_point(fill = c("#DAC051","#36622C",
+                             "#954B49","#B1A273"),
+                    colour = "black",
+                    size = 6,
+                    shape = 21,
+                    stroke = 2) +
+    theme(legend.position = 'none',
+          plot.margin = unit(c(0, 0, -4, 0), "cm")) +
+    theme_graph(background = "transparent") + 
+    coord_fixed(clip = "off")
+  return(p)
+  
+}
 
 
 local.fw(250,750)
@@ -308,12 +454,33 @@ fw7 = local.fw(16,30)
 fw8 = local.fw(16,30)
 
 
-early <- plot_grid(fw1,fw3,fw5,fw7, ncol = 1)  + draw_plot_label( "Early succession", size = 12, x = .12)
-late  <- plot_grid(fw2,fw4,fw6,fw8, ncol = 1)  + draw_plot_label("Late succession", size = 12, x = .12)
-regional <- plot_grid(fw0, NULL, ncol = 1)     + draw_plot_label("Regional pool", size = 12, x = .16)
-comp <- plot_grid(a.early, a.late, ncol = 2) #+ draw_plot_label("Producer competition", size = 12, x = .16)
-sim <- plot_grid(pn,ls,comp, ncol = 1) #+ draw_plot_label("Niche differenciation", size = 12, x = .16)
-(concept <- plot_grid(regional, early, sim, late, ncol = 4))
+early <- plot_grid(fw1,fw3,fw5,fw7, ncol = 1,
+                   labels = c("b","","",""),
+                   label_size = 15)  + draw_plot_label( "Local communities", size = 12, x = .06)
+#late  <- plot_grid(fw2,fw4,fw6,fw8, ncol = 1)  + draw_plot_label("Late succession", size = 12, x = .12)
+regional <- plot_grid(fw0, ncol = 1,
+                      labels = "a",
+                      label_size = 15)     + draw_plot_label("Regional pool", size = 12, x = .33)
+#comp <- plot_grid(a.early, a.late, ncol = 2) #+ draw_plot_label("Producer competition", size = 12, x = .16)
+mods <- plot_grid(NULL, module1(2,2),module2(2,2), ncol = 3,
+                  rel_widths = c(.2,1,1))
+sim <- plot_grid(pn, NULL, ls, mods, ncol = 1,
+                 labels = c("c","","d",""),
+                 label_size = 15,
+                 rel_heights = c(2,.5, 1.5,1)) #+ draw_plot_label("Niche differentiation", size = 12, x = .16)
+#(concept <- plot_grid(regional, early, sim, late, ncol = 4))
+(concept <- plot_grid(regional, early, sim, ncol = 3, rel_widths = c(2,1,1)))
+
+# save the plot
+ggsave("Concept2.png",
+       bg="white",
+       scale = 2,
+       width = 173,
+       height = 173/1.5,
+       units = "mm",
+       dpi = 300)
+
+
 ggsave("Concept.png", concept, bg="white",
        width = 15,
        height = 7.5,
