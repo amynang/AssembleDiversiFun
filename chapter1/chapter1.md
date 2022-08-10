@@ -10,7 +10,7 @@ author: |
     Ulrich Brose $^1$
   | $^1$Friederich Schille University of Jena,  
     $^2$University of Leipzig
-date: "09 August, 2022"
+date: "10 August, 2022"
 #fontfamily: Coelacanth Regular
 abstract: Species-rich communities have shown increased ecosystem functioning such as higher primary productivity or more effective control of herbivores by predator. Additionally, experiments demonstrated that the positive relationship between diversity and ecosystem functioning tends to become steeper over time. One mechanism proposed to explain this change is the reduction of niche overlap within producers and consumers as communities transition to later successional stages. The resulting decrease in competition is hypothesized to be one of the key drivers behind the strengthening of the diversity-functioning relationship. Here we examine how niche differentiation in consumer and producer communities would affect the plant diversity-productivity relationship by combining a food-web assembly model with a bio-energetic model of community dynamics. Starting from a regional pool of species and their potential interactions, we constructed viable local communities that varied in plant richness and niche overlap among species, i.e. with unrestricted or restricted linkage similarity among consumers, crossed with high or low interspecific competition among plants. Then we simulated community dynamics to examine how the different scenarios modify the plant diversity-productivity relationship. Reduced competition had generally minor effects on primary productivity compared to the effect of plant richness. Moreover, we found that a reduction of similarity among consumers did lead to marginally higher productivity in plant-rich and lower in plant-poor communities on average but there was considerable variation in the sign and strength of this relationship and this was more pronounced in communities with fewer plant species. Contrary to our expectations, the reduction of inter-specific competition among plants resulted on average in lower primary productivity across the plant richness gradient. Deciphering the role of competition in ecosystem processes will inform our understanding of how community change over time can modify the functioning of ecosystems which in turn has implications for conservation versus restoration decisions.
 output:
@@ -22,7 +22,12 @@ output:
   keep_md: true
   css: style.css
 # word_document:
-#  reference_docx: "LaTeX 7.docx"
+##  reference_docx: "LaTeX 7.docx"
+#knit: (function(input, ...) {
+#    rmarkdown::render(
+#      input,
+#      output_file = "G:\\My Drive\\doc4drive.docx")
+#  })
 # pdf_document:
 #   latex_engine: pdflatex
   #classoption: twocolumn
@@ -46,6 +51,21 @@ bibliography: references.bib
 ### Methods
 
 ![Conseptual figure](images/concept.png)
+
+![Concept figure. (a) A regional pool of species and their potential
+interactions, featuring allometric predatory and nested herbivorous
+interactions. (b) Local communities of a varying number of plants and a fixed
+number of animals produced by sampling from the regional pool. (c) Plant species
+in communities without history can have high niche overlap and therefore high
+inter-specific competition. Over time they can respond either by restricting
+their niche to avoid other species but increasing competition with
+con-specifics, or spread out in niche space so that overall competition
+decreases. (d) Animal competition is reduced by iteratively replacing species
+with others from the regional pool such that linkage similarity is reduced,
+simulating the effects of competitive exclusion. Starting from animal
+communities with unrestricted link similarity (left), we get animal communities
+with restricted similarity (right). Animals are represented by circles red hues,
+plants by circles in green hues.](images/Concept2.png)
 
 #### Regional species pool
 
