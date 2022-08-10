@@ -4,17 +4,17 @@ library(tidyverse)
 results = readRDS("results_20220721_N_40_comp_40000.RData")
 
 
-# soll = as.data.frame(results[[36]][[1]])
-# # colnames(soll) = c("time",
-# #                    # paste0("nut_",1:2),
-# #                    colnames(reg.loc[[n]][[s]]))
-# 
-# solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
-# solll$taxon = substr(solll$species, 6, 8)
-# 
-# # plot results
-# ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
-#   geom_point() 
+soll = as.data.frame(results[[17]][[1]])
+# colnames(soll) = c("time",
+#                    # paste0("nut_",1:2),
+#                    colnames(reg.loc[[n]][[s]]))
+
+solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
+solll$taxon = substr(solll$species, 6, 8)
+
+# plot results
+ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
+  geom_point()
 
 
 
@@ -106,6 +106,8 @@ for (w in 21619:length(results)) {
   for (i in 1:dim(results[[w]][[2]]$alpha)[1]) {
     plant.prod[i] = results[[w]][[2]]$r[i]*
                     plant.growth[i]*
+                    results[[w]][[1]][t.end,1+i] 
+                  - results[[w]][[2]]$X[i]*
                     results[[w]][[1]][t.end,1+i]
   }
   
@@ -604,7 +606,7 @@ ggplot(properties[which(properties$plant.end!=0 & properties$herbivory.control!=
            y = log10(herbivory.control + 1e-9), 
            color = scenario)) +
   geom_point(alpha = .1, size = 3, position = position_jitter(.3)) +
-  geom_smooth(method = "lm", formula = y ~ x #+ I(x^2)
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)
     ,se = F#,color = "#EC9706"
   ) +
   #geom_vline(xintercept = 0, linetype = "dashed") +
