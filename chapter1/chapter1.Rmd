@@ -1,5 +1,5 @@
 ---
-title: "Insert Title Here"
+title: "Deciphering the role of niche complementarity in the strengthening of the diversity - ecosystem functioning relationship over time"
 author: |
   | Angelos Amyntas^[Corresponding author: angelos.amyntas@idiv.de] $^1$,
     Emilio Berti $^1$,
@@ -12,27 +12,29 @@ author: |
     $^2$University of Leipzig
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 #fontfamily: Coelacanth Regular
-abstract: Species-rich communities have shown increased ecosystem functioning such as higher primary productivity or more effective control of herbivores by predator. Additionally, experiments demonstrated that the positive relationship between diversity and ecosystem functioning tends to become steeper over time. One mechanism proposed to explain this change is the reduction of niche overlap within producers and consumers as communities transition to later successional stages. The resulting decrease in competition is hypothesized to be one of the key drivers behind the strengthening of the diversity-functioning relationship. Here we examine how niche differentiation in consumer and producer communities would affect the plant diversity-productivity relationship by combining a food-web assembly model with a bio-energetic model of community dynamics. Starting from a regional pool of species and their potential interactions, we constructed viable local communities that varied in plant richness and niche overlap among species, i.e. with unrestricted or restricted linkage similarity among consumers, crossed with high or low interspecific competition among plants. Then we simulated community dynamics to examine how the different scenarios modify the plant diversity-productivity relationship. Reduced competition had generally minor effects on primary productivity compared to the effect of plant richness. Moreover, we found that a reduction of similarity among consumers did lead to marginally higher productivity in plant-rich and lower in plant-poor communities on average but there was considerable variation in the sign and strength of this relationship and this was more pronounced in communities with fewer plant species. Contrary to our expectations, the reduction of inter-specific competition among plants resulted on average in lower primary productivity across the plant richness gradient. Deciphering the role of competition in ecosystem processes will inform our understanding of how community change over time can modify the functioning of ecosystems which in turn has implications for conservation versus restoration decisions.
+abstract: Species-rich communities have shown increased ecosystem functioning, such as higher primary productivity. This positive relationship between diversity and functioning tends to become steeper over time. One mechanism proposed to explain this change is the reduction of niche overlap and therefore competition within producers and consumers. Here, combining a food-web assembly model with a bio-energetic model of community dynamics, we examine how niche differentiation in consumer and producer communities affects the plant diversity-productivity relationship. Drawing species from a regional pool, we constructed communities that varied in plant richness and niche overlap among species, i.e. unrestricted or restricted linkage similarity among consumers, crossed with high or low interspecific competition among plants. Simulating community dynamics, we examine how the different scenarios modify the plant diversity-productivity relationship. We demonstrate that low intraspecific competition among producers is critical for increased niche complementarity of consumers or producers to have a positive effect on the diversity-productivity relationship. 
 output:
- html_document: 
-  toc: true
-  toc_depth: 6
-  toc_float: true
-  collapsed: true
-  keep_md: true
-  css: style.css
-# word_document:
-##  reference_docx: "LaTeX 7.docx"
-#knit: (function(input, ...) {
-#    rmarkdown::render(
-#      input,
-#      output_file = "G:\\My Drive\\doc4drive.docx")
-#  })
-# pdf_document:
-#   latex_engine: pdflatex
-#classoption: twocolumn
+# html_document: 
+#  toc: true
+#  toc_depth: 6
+#  toc_float: true
+#  collapsed: true
+#  keep_md: true
+#  css: style.css
+ word_document:
+#  reference_docx: "LaTeX 7.docx"
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_file = "G:\\My Drive\\doc4drive.docx")
+  })
+#  bookdown::pdf_document2:
+## pdf_document:
+##   latex_engine: pdflatex
+#classoption: 
+#   - twocolumn
 #header-includes:
-#   - \usepackage{multicol}
+##   - \usepackage{multicol}
 #   - \usepackage{hyperref}
 zotero: true
 link-citations: true
@@ -58,6 +60,90 @@ History - pattern and process
 
 Niche and competition
 
+An ecosystem's ability to function, resist disturbances and provide services to
+humans depends on its biodiversity [citation]. Additionally, research in the
+last decades has indicated that this positive diversity - functioning
+relationship tends to establish over time [@cardinale2007; @meyer2016].
+Therefore, it may be weak [@reich2012] or absent [@strecker2016] among
+communities in the first few years of their existence, and become considerably
+stronger in later years [@huang2018]. One implication is that restored
+communities may require considerable time to achieve a level of functioning
+comparable to old natural communities [@moreno-mateos2020; @resch2021].
+Understanding the mechanisms that are involved in the establishment of the
+diversity - ecosystem functioning relationship is thus crucial for the effective
+management of ecosystems, as they can tip the scales in conservation versus
+restoration decisions.
+
+Competition for resources such as light or nutrients is instrumental in
+understanding the changes of the plant community functioning over time. Plant
+species grown in diverse plant communities (mixtures) have been shown to become
+morphologically more dissimilar than the same species when grown in monocultures
+[@zuppinger-dingley2014]. This suggests that intraspecific competition leads to
+reduced niche overlap among species, making them more complementary in their use
+of resources. On the other hand, intraspecific trait variability promotes
+coexistence by allowing individuals to escape competition from conspecifics
+[@jung2010]. The implication is that avoiding interspecific competition can come
+at a cost, if it can only be accomplished by individuals of the same species
+becoming more concentrated in niche space. We would therefore argue that for
+niche differentiation to have a net positive effect on productivity, it must be
+effected in a way that allows species to lower interspecific competition, while
+at the same time maintaining tolerable levels of intraspecific competition. This
+in turn requires that species shift their location in niche space while
+maintaining relatively high dispersion. Despite evidence that plant populations
+shift in their traits over time (REFs) and thus change the niche spectrum they
+occupy, it is far from clear how these dynamic changes affect their
+diversity-productivity relationship.
+
+Recent studies have highlighted the importance of multi-trophic interactions in
+our understanding of the relationship between diversity and ecosystem
+functioning [@seibold2018; @barnes2020; @albert2022], expanding the focus of the
+field from primary productivity to functions performed by the consumer community
+[@poisot2013; @barnes2020; @maureaud2020] and the multi-trophic control of plant
+diversity and productivity [@schneider2016; @wang2018]. This multi-trophic
+perspective is equally relevant in our effort to understand how community
+assembly across trophic levels can reshape this relationship over time. Active
+dispersal makes it easy for regional consumers to colonize a location, as long
+as they can find resources there [@gravel2011; @bauer2022], but after the early
+pioneer phase the food-web they comprise will also be structured by competitive
+exclusion. Specifically, strong competitors can extirpate species that occupy a
+similar niche, while new species can succeed in invading the community only if
+they are sufficiently unique to avoid competition by existing species
+[@hui2021]. In this sense, species\' trophic links are an important
+manifestation of their realized niche; species that share resources will
+experience high exploitative competition while species that share consumers are
+subject to apparent competition [@holt1977; @stouffer2010; @holt2017a]. The
+expected effect of time is therefore to restructure the animal community in a
+way that increases trophic complementarity [@poisot2013; @bauer2022], with
+potential cascading effects to the plant community. However, the effects of such
+multitrophic restructuring during community assembly processes on the strength
+of the relationship between plant diversity and primary productivity have
+remained virtually unexplored.
+
+~~Several mechanisms have been hypothesized to contribute to [original way of
+saying it again] in plant-rich communities. In the case of primary productivity,
+these include increased facilitation by beneficial microbes [?], increased
+resource complementary through reduced niche overlap among plants
+[@zuppinger-dingley2014] or animals [].~~
+
+As these different mechanisms of plant and animal competition are likely to act
+in concert, discerning their individual contribution to the observed patterns in
+plant diversity-productivity relationships can be challenging. In particular,
+experimental manipulations of plant niches and animal interactions in the field
+are extremely challenging at best. Therefore, in silico biodiversity experiments
+are useful as they allow us to investigate the expected effects of community
+assembly on the niche overlap of plants and animals separately. By excluding
+other potentially confounding factors they  provide the means to examine how
+niche shifts of the animal and plant communities during assembly  modify the
+diversity-function relationship . Here, we use such an in silico approach and
+investigate the potential for niche differentiation over time, in both plant and
+animal communities, to modify the relationship between plant diversity and three
+key ecosystem functions: primary productivity, herbivory pressure on plants, and
+herbivore control by predators. ~~Our results confirm that the relative changes
+of intra- and interspecific competition in plants can determine whether the
+diversity-functioning relationship will strengthen or weaken over time, while
+the effects of increased complementarity among animals can be highly variable,
+yet positive on average.~~
+
 ### Methods
 
 ![Conseptual figure](images/concept.png)
@@ -82,7 +168,7 @@ plants by circles in green hues.](images/Concept2.png)
 We generated a regional species pool of 1000 species (250 each of plants,
 herbivores, omnivores, predators). Species' body-masses (in grams) where defined
 as $10^x$, where $x$ is sampled with a uniform distribution in [-9, 3] to
-represent soil organisms from nematodes to small mammals. We arranged
+represent terrestrial organisms from nematodes to small mammals. We arranged
 herbivorous interactions, including herbivory by omnivores, to have a nested
 pattern with some plants consumed by most plant consumers, while others by only
 few and some plant consumers consuming most plant species while others only few
@@ -163,10 +249,11 @@ $$\frac{dB_i}{dt} = (r_iG_i-x_i)B_i - \sum_{j}x_jy_jB_jF_{ij}$$
 The first term in equation (1) describes biomass gains through growth, where
 $B_i$ is the biomass of species $i$, $r_i$ is the mass-specific maximum growth
 rate, $G_i$ is the net growth rate and $x_i$ is the mass-specific metabolic
-rate, scaled to the growth rate $r$ of the smallest basal species. The second
-term describes losses to consumption, where $B_j$ is the biomass of consumer
-$j$, $y_j$ is the maximum feeding rate of $j$ relative to its metabolic rate and
-$F_{ij}$ is the per unit biomass feeding rate of species $j$ on species $i$.
+rate, scaled to the growth rate $r$ of the smallest basal species *in the
+regional pool*. The second term describes losses to consumption, where $B_j$ is
+the biomass of consumer $j$, $y_j$ is the maximum feeding rate of $j$ relative
+to its metabolic rate and $F_{ij}$ is the per unit biomass feeding rate of
+species $j$ on species $i$.
 
 The net growth rate of species $i$ is defined as
 
@@ -241,69 +328,100 @@ initial plant richness had on average a larger proportion of plant and animal
 species surviving at the end of simulations (supplement?). This resulted in a
 positive plant richness - animal richness relationship.
 
-The simulated communities reproduced the expected positive and saturating plant
-richness-productivity relationship (fig. 1), as well as a positive relationship
-between richness and standing plant biomass (figSA). When comparing our
-scenarios of competition change to a baseline of unrestricted similarity among
-animals and high inter-specific as well as intra-specific competition among
-plants (fig. 1a), we found that a reduction of similarity (and therefore
-competition) among animals had ~~a marginally positive~~ practically no effect
-in the richness-productivity relationship (fig1b) (but had a more pronounced
-positive effect on the richness-biomass relationship (fig.SAb)).
+![Figure 2. (a) b c](images/figure2.png)
 
-Changes in plant competition had generally stronger effects. When the change in
-competition resulted in plant species competing less with other species but
+The simulated communities reproduced the expected positive and saturating plant
+richness-productivity relationship (fig. 2a), as well as a positive relationship
+between richness and standing plant biomass (figSA). Control of herbivores had a
+hump-shaped relationship with plant richness reaching a peak in communities with
+between 4 and 8 plant species (fig 2b). Similarly, herbivory pressure on plants
+peaked in communities with \~4 plant species and declined with increasing plant
+richness (fig 2c).
+
+A comparison of the different competition scenarios across all simulated
+communities, revealed that plant communities with stronger intra-specific
+competition had reduced productivity despite the release from inter-specific
+competition, which resulted in a dampening of the richness-productivity
+relationship. A combined reduction of inter- and intra-specific competition
+reproduced the observed pattern of a steeper diversity productivity
+relationship. Communities with low animal competition/high consumer
+complementarity had on average higher productivity than communities with high
+animal competition/low consumer complementarity but this difference was more
+pronounced in communities with low plant competition.
+
+The effect of competition differences on herbivore control were qualitatively
+similar; higher intraspecific competition among plants had a negative effect on
+herbivore control while the effect of lower plant competition was positive. High
+consumer complementarity had a positive effect on herbivore control regardless
+of the plant competition scenario.
+
+Herbivory pressure on plants was not strongly affected by an increase of plant
+intra-specific competition, but it increased with lower plant competition,
+especially in communitites with high plant richness. Communities with high
+consumer complementarity had lower herbivory pressure and additionally this
+dampened any effects of plant competition.
+
+To better appreciate how changes in plant and animal competition over time
+affect ecosystem functioning, we need to consider these differences not across
+all simulated communities but within each community, under different competition
+scenarios, i.e. what is the difference in function of a focal community, as it
+transitions from high to low plant competition; what is the additional
+difference as an effect of increased consumer complementarity etc. In figure 3
+we present these differences in productivity (a), herbivory control (b) and
+herbivory pressure (c), across the plant richness gradient, for communities that
+transition to higher intraspecific plant competition (i) or lower plant
+competition (iii) and then the additional difference as those transition to
+higher consumer complementarity (ii and iv respectively). While the effects of
+competition changes "over time" are qualitatively similar to what is shown in
+figure 2, a direct examination of the differences in function highlights a few
+important points. Specifically, it is clear that changes in plant competition
+have a consistent effect on productivity, especially at higher richness levels
+(negative for increased intraspecific competition, positive for lower
+competition). In contrast, the average effect of an increase in animal
+complementarity on primary productivity may be positive, especially when
+combined with low plant competition but there is considerable variability, with
+a lot of communities experiencing a reduction of productivity. The increase of
+animal complementarity has similarly variable effects on the difference over
+time of the other two ecosystem functions, while the reduction of plant
+competition has similarly consistent effects on them.
+
+~~When comparing our scenarios of competition change to a baseline of
+unrestricted similarity among animals and high inter-specific as well as
+intra-specific competition among plants (fig. 1a), we found that a reduction of
+similarity (and therefore competition) among animals had a marginally positive
+practically no effect in the richness-productivity relationship (fig1b) (but had
+a more pronounced positive effect on the richness-biomass relationship
+(fig.SAb)).~~
+
+~~Changes in plant competition had generally stronger effects. When the change
+in competition resulted in plant species competing less with other species but
 stronger with con-specifics, there was on average a negative effect on the
 richness-productivity relationship across all richness levels (although the
 effect was variable at low plant richness and very consistent at high plant
 richness) (fig. 1c). By contrast, lowering competition overall in the plant
 community led to a consistent relative increase in productivity at higher
 richness levels (fig. 1d), corresponding to a steepening of the
-richness-diversity slope.
+richness-diversity slope.~~
 
-Finally, the combination of reduced animal and plant competition had on average
-a positive difference in productivity that was larger at higher plant richness
-(fig. 1e). Additionally, the difference in productivity of communities with low
-versus high animal competition when plant competition is low (fig. SB), shows
-that the reduction in animal competition does have a small contribution to the
-relationship shown in fig.1e.
-
-![Figure 1. Primary productivity at equilibrium. (a) Primary productivity at
-different levels of initial plant richness for communities with unrestricted
-animal similarity and high interspecific plant competition. (b) The difference
-in productivity relative to (a) when plants compete less with other species but
-stronger with conspecifics. (c) The additional difference in productivity when
-animals are less similar to each other. (d) The difference in productivity
-relative to (a) when plants compete less overall. (e) The additional difference
-in productivity when animals are less similar to each other. Black points are
-mean values, thick black lines represent the 75% density interval, thin black
-lines the 95% density interval.](images/primaryprod4.png){#fig:productivity}
+~~Finally, the combination of reduced animal and plant competition had on
+average a positive difference in productivity that was larger at higher plant
+richness (fig. 1e). Additionally, the difference in productivity of communities
+with low versus high animal competition when plant competition is low (fig. SB),
+shows that the reduction in animal competition does have a small contribution to
+the relationship shown in fig.1e.~~
 
 $~$
 
-The pressure of herbivory on plants (quantified as total out-fluxes from plants
-to their consumers, including omnivores, divided by plant biomass) was lower at
-higher richness levels (fig2). The difference in herbivory pressure as a result
-of changes in animal or plant competition was highly variable at low plant
-richness and diminished at high richness but, overall, competition changes did
-not have an effect on the slope or intercept of the richness-herbivory-pressure
-relationship (figs 2b-d).
+~~The pressure of herbivory on plants (quantified as total out-fluxes from
+plants to their consumers, including omnivores, divided by plant biomass) was
+lower at higher richness levels (fig2). The difference in herbivory pressure as
+a result of changes in animal or plant competition was highly variable at low
+plant richness and diminished at high richness but, overall, competition changes
+did not have an effect on the slope or intercept of the
+richness-herbivory-pressure relationship (figs 2b-d).~~
 
-![Figure 2. Herbivory pressure at equilibrium (outfluxes from plants to plant
-consumers incl. omnivores divided by plant biomass). (a) Herbivory pressure at
-different levels of initial plant richness for communities with unrestricted
-animal similarity and high interspecific plant competition. (b) The difference
-in herbivory pressure relative to (a) when plants compete less with other
-species but stronger with conspecifics. (c) The additional difference in
-herbivory pressure when animals are less similar to each other. (d) The
-difference in herbivory pressure relative to (a) when plants compete less
-overall. (e) The additional difference in herbivory pressure when animals are
-less similar to each other. Black points are mean values, thick black lines
-represent the 75% density interval, thin black lines the 95% density interval.
-(d) excludes an outlier of 0.57.](images/pressure4.png)
-
-The control of herbivores by predators (quantified as the ratio of out-fluxes to
-in-fluxes of herbivores) had a hump-shaped relationship with plant richness
+~~The control of herbivores by predators (quantified as the ratio of out-fluxes
+to in-fluxes of herbivores) had a hump-shaped relationship with plant richness
 (fig.3). This was largely the result of no control at the lowest richness level
 as a majority of the 2 plant species communities consisted of plants and
 herbivores alone with no higher levels surviving. A reduction in animal
@@ -317,19 +435,9 @@ change of lower animal and plant competition, also had a positive difference in
 herbivore control at higher plant richness. Again the contribution of a
 reduction of animal competition is clear when comparing the differene in
 herbivore control among communities with low versus high animal competition when
-plant competition is low (fig. SC).
+plant competition is low (fig. SC).~~
 
-![Figure 3. Herbivore control at equilibrium (The ratio of outfluxes to influxes
-for herbivores). (a) Herbivore control at different levels of initial plant
-richness for communities with unrestricted animal similarity and high
-interspecific plant competition. (b) The difference in herbivore control
-relative to (a) when plants compete less with other species but stronger with
-conspecifics. (c) The additional difference in herbivore control when animals
-are less similar to each other. (d) The difference in erbivore control relative
-to (a) when plants compete less overall. (e) The additional difference in
-herbivore control when animals are less similar to each other. Black points are
-mean values, thick black lines represent the 75% density interval, thin black
-lines the 95% density interval.](images/control4.png)
+![Figure 3. a b c](images/deltas-02.png)
 
 ### Discussion
 
@@ -342,7 +450,10 @@ competition by restricting their niche, thereby experiencing stronger
 competition by conspecifics, the effect of change over time would be negative.
 If on the other hand plants have the potential to avoid inter-specific
 competition by spreading out in niche-space, thereby maintaining low levels of
-intra-specific competition, the effect on productivity can be positive.
+intra-specific competition, the effect on productivity can be positive. Our
+results therefore provide a mechanism in support of empirical evidence that
+intra-specific variation can be as important as species diversity for some
+ecosystem processes [@crutsinger2006; @desroches2018].
 
 As a simplifying assumption, we configured plant competition change over time in
 a way that implies that the plants' potential of niche expansion is
@@ -357,6 +468,42 @@ The implication is that our two different scenarios of plant competition-change
 over time can be seen as two extremes and where exactly natural communities
 would fall along this continuum would strongly depend on the number of competing
 species.
+
+Another aspect of plant resource competition that deserves further
+investigation, is that of species being clustered in trait space due to shared
+phylogeny or convergence. Species that belong to the same functional group (such
+as grasses, or legumes) would compete stronger with each other than with species
+in other groups. Individuals in natural communities exist in a competition
+gradient, experiencing strong competition from conspecifics, intermediate
+competition from individuals of functionally similar species and low competition
+from functionally dissimilar species. One important consequence is that the
+balance of inter- to intraspecific competition will be determined by the
+functional composition of the community.
+
+We do not explicitly consider asymmetric competition, therefore leaving aside
+the question of selection effects on function [@loreau2001]. However there is a
+lot of evidence that complementarity rather than selection is the driving force
+behind the diversity-ecosystem functioning relationship [@loreau2001;
+@cardinale2007; @huang2018; but see @genung2020]. Accordingly, our modeling
+framework focuses on how increased complementarity among plants and animals can
+change the ecosystem functioning relationship.
+
+@seabloom2017 demonstrated experimentally that when plant communities are
+embedded in a complex food-web, due to the partial transformation of plant
+biomass to animal biomass, the effects of plant richness on productivity can be
+obscured, if biomass is used as a proxy for productivity. In contrast, dynamic
+models allow us to consider productivity per se, as biomass growth before losses
+to consumption.
+
+Disturbance can impede the progress to mature, structured communities of high
+complementarity; indeed consumers in disturbed habitats can have poor niche
+specialization [@korotkevich2018], suggesting that disturbance can have a
+regressive effect, preventing communities to transition to [aaaaarghhh].
+
+In natural communities, increased productivity can have a bottom-up effect on
+consumer complementarity even in the absence of species replacement, as
+increased resource availability allows consumers to subsist on a narrower diet
+[@lesser2020].
 
 ### References
 
@@ -402,3 +549,5 @@ plant and animal competition scenarios](images/herb_contasts-02.png)
 ![Figure S\_. Differences in herbivory control by predators among all 6
 combinations of plant and animal competition
 scenarios](images/cont_contasts-02.png)
+
+![Figure S\_. Biomass contrasts](images/biom_contasts.png)
