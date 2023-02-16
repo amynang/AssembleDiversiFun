@@ -3,16 +3,51 @@ library(tidyverse)
 library(ATNr)
 set.seed(321)
 
-reg.loc = readRDS("reg.loc_20220721_N_40_comp.RData")
 
+
+# unlike the default option in the scaled model, we want to scale all rates rel.
+# to those of the smallest producer *in the regional pool*
+# this way we can rate-based attributes across food-webs
+initialise_default_Scaled.local <- function (model, min.BM) 
+{
+  utils::data("schneider", envir = environment())
+  schneider[["nb_s"]] <- model$nb_s
+  schneider[["nb_b"]] <- model$nb_b
+  schneider[["BM"]] <- model$BM
+  ar <- 1
+  K <- 10
+  w <- sweep(x = model$fw, MARGIN = 2, FUN = "/", colSums(model$fw))
+  model$w <- w[, (model$nb_b + 1):model$nb_s]
+  #min.BM = min(model$BM[1:model$nb_b])
+  # min.BM <- with(schneider, min(BM[1:nb_b]))
+  model$X <- with(schneider, 0.314 * BM^-0.25 / min.BM^-0.25)
+  # model$X[1:schneider$nb_b] <- 0.0
+  model$e <- with(schneider, c(rep(e_P, nb_b), rep(e_A, nb_s - 
+                                                     nb_b)))
+  model$c <- rep(0.8, model$nb_s - model$nb_b)
+  model$max_feed <- rep(8, model$nb_s - model$nb_b)
+  model$B0 <- rep(0.5, model$nb_s - model$nb_b)
+  model$q <- stats::rnorm(1, 1.2, 0.2)
+  model$r <- with(schneider, (ar * BM[1:nb_b]^-0.25)/(ar * 
+                                                        min.BM^-0.25))
+  model$K <- 10
+  model$F <- with(schneider, matrix(0, nrow = model$nb_s, 
+                                    ncol = model$nb_s - model$nb_b))
+  model$alpha <- matrix(0, nrow = model$nb_b, ncol = model$nb_b)
+  diag(model$alpha) = 1
+  return(model)
+}
+
+
+reg.loc = readRDS("reg.loc_2-16.RData")
 # the first element of the list contains two objects:
 # the interaction matrix of the regional meta-foodweb
 # and the vector of bodymasses of the regional species
 
-# the subsequent elements contain four objects each:
+# the subsequent elements contain five objects each:
 
 # the first one is a local foodweb that is a random subset of the regional
-# with 2, 4, 8 or 16 producers and 60 consumers
+# with 2 to 16 producers and 60 consumers
 # consumers must have a resource and all producers have at least one consumer
 # also, we want the subset to comprise a single foodweb (no isolated components)
 # these are our "early succession" foodwebs
@@ -22,18 +57,19 @@ reg.loc = readRDS("reg.loc_20220721_N_40_comp.RData")
 # consumers
 # these are our "late succession" foodwebs
 
-# the third and fourth ones are plant competition matrices
-# with high interspecific low intraspecific and low interspecific high intraspecific
-# competition respactively, such that the overlall competition that a species 
-# experiences (the column sum) remains 1
+# the third, fourth and fifth ones are plant competition matrices
+# with high interspecific low intraspecific, low interspecific high intraspecific
+# and low inter and intra-
+# competition respectively
+
 
 results = vector(mode = "list")
-
-#results[[1]][[1]] = 1
 
 for (i in 2:length(reg.loc)) { # for each food-web
   for (j in 1:2) { # random or dissimilar consumers
     for (k in 3:5) { # high or low interspecific plant competition
+      
+      min.BM = reg.loc[[1]][[2]][1]
       # we draw random starting biomasses from U(2,3)
       biomasses <- runif(dim(reg.loc[[i]][[j]])[1], .02, .03)
       # number of species
@@ -42,26 +78,22 @@ for (i in 2:length(reg.loc)) { # for each food-web
       plants = length(grep("plant", colnames(reg.loc[[i]][[j]])))
       # bodymasses of species
       bodymasses = reg.loc[[1]][[2]][as.integer(substr(colnames(reg.loc[[i]][[j]]), 1, 4))]
-      
       # like Delmas
       model_scaled <- create_model_Scaled(# number of species
-                                          species, 
-                                          # number of basal species
-                                          plants, 
-                                          # bodymasses of species
-                                          bodymasses, 
-                                          # binary interaction matrix
-                                          vegan::decostand(reg.loc[[i]][[j]],"pa")
+        species, 
+        # number of basal species
+        plants, 
+        # bodymasses of species
+        bodymasses, 
+        # binary interaction matrix
+        vegan::decostand(reg.loc[[i]][[j]],"pa")
       )
       
-      # set.seed(i) # so that food-webs in every group differ only in animal/plant competition
-      model_scaled <- initialise_default_Scaled(model_scaled)
+      model_scaled <- initialise_default_Scaled.local(model_scaled, min.BM = min.BM)
       model_scaled$initialisations()
-      # change W so that unlike Delmas, generalists are as efficient as specialists
-      #model_scaled$w = vegan::decostand(model_scaled$w,"pa")
       
-      # reduce interference competition
-      #model_scaled$c = rep(.3,60)
+      # fix the Hill exponent
+      model_scaled$q <- 1.2
       
       # plant competition scenario
       model_scaled$alpha = reg.loc[[i]][[k]]
@@ -93,20 +125,5 @@ for (i in 2:length(reg.loc)) { # for each food-web
 
 
 # save to working directory
-saveRDS(results, file="results_20220721_N_40_comp_40000.RData")
+saveRDS(results, file="results_2-16.RData")
 
-# for (i in 2:ncol(results[[1]][[1]])) {
-#   
-#   
-# }
-# 
-# colnames(soll) = c("time",
-#                    # paste0("nut_",1:2),
-#                    colnames(reg.loc[[n]][[s]]))
-# 
-# solll = soll %>% pivot_longer(!time, names_to = "species", values_to = "biomass")
-# solll$taxon = substr(solll$species, 6, 8)
-# 
-# # plot results
-# ggplot2::ggplot(solll[,], aes(x=time, y=biomass, color = taxon)) +
-#   geom_point() 
