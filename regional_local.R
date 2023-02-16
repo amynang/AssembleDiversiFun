@@ -1,5 +1,6 @@
 library(tidyverse)
 library(assembly)
+library(igraph)
 library(ATNr)
 set.seed(321)
 
@@ -22,7 +23,7 @@ show_fw <- function(mat, title = NULL) {
 dim1 = 250
 dim2 = 500
 
-# quick & dirty way for nested plant-consumer interactions
+# generating nested plant-consumer interactions
 # create a dataframe to generate nestedness
 dum = data.frame(row = rep(1:dim1,dim2),
                  col = rep(1:dim2,each = dim1))
@@ -61,10 +62,6 @@ n_species <- dim1+dim2+250
 n_basal <- dim1
 
 # body mass of species
-# masses <- 10 ^ c(sort(runif(n_basal, 0, 6)),
-#                  sort(runif(n_species - n_basal, 2, 12)))
-
-# # from 1ngram to 1kgram
 masses <- 10 ^ c(sort(runif(n_basal, -9, -3)),
                  sort(runif(n_species - n_basal, -9, 3)))
 
@@ -72,9 +69,10 @@ masses <- 10 ^ c(sort(runif(n_basal, -9, -3)),
 # create the allometric matrix
 K <- create_Lmatrix(masses, 
                     n_basal, 
-                    Ropt = 3.98, #100, #3.98
+                    Ropt = 3.98,
                     gamma = 2, 
                     th = 0.01)
+
 # predatory links are allometric
 L[(dim1+1):n_species, ] = K[(dim1+1):n_species, ]
 
@@ -128,7 +126,7 @@ fw[fw > 0] <- 1
 # an empty list
 reg.loc = vector(mode = "list", 1)
 # the first element of the list contains two objects:
-# the interaction matrix of the regional regional meta-foodweb
+# the interaction matrix of the regional meta-foodweb
 # and the vector of bodymasses of the regional species
 reg.loc[[1]][[1]] = L
 reg.loc[[1]][[2]] = masses
@@ -147,11 +145,11 @@ reg.loc[[1]][[2]] = masses
 # these will be our "late succession" foodwebs
 
 # specify the levels of producer diversity
-producer_diversity = c(2,4,8,16)
+producer_diversity = seq(2,16,1)
 
 # generate the "early succession" local foodwebs
 # k iterations
-for (k in 1:1000) { 
+for (k in 1:300) { 
   #for (j in consumer_diversity) {
   
   for (i in producer_diversity) {
@@ -211,7 +209,8 @@ for (m in 2:length(reg.loc)) {
 
 
 # for each early-late pair, add a matrix of high interspecific 
-# and a matrix of low interspecific competition
+# a matrix of low interspecific but higher intraspecific competition
+# and a matrix where interspecific competition decreases while intra- stays the same
 set.seed(321)
 for (m in 2:length(reg.loc)) {
   # number of plant species
@@ -220,110 +219,12 @@ for (m in 2:length(reg.loc)) {
   # lower upper values specify **intraspecific** competition
   # interspecific for each plant then sums to 1-intraspesific
   reg.loc[[m]][[3]] = competition.N(lower = .5, upper = .6, plants) #high inter-
-  reg.loc[[m]][[4]] = competition.N(lower = .9, upper = 1, plants) #low inter-
+  reg.loc[[m]][[4]] = competition.N(lower = .9, upper = 1, plants) #low inter- high intra-
   reg.loc[[m]][[5]] = reg.loc[[m]][[4]]
   diag(reg.loc[[m]][[5]]) = diag(reg.loc[[m]][[3]]) # low overall
 }
 
 
 # save to working directory
-saveRDS(reg.loc, file="reg.loc_20220721_N_40_comp.RData")
+saveRDS(reg.loc, file="reg.loc_2-16.RData")
 
-reg.loc = readRDS("reg.loc_20220622.RData")
-
-show_fw(vegan::decostand(local_early[[4]],"pa"), title = "L-matrix model food web")
-show_fw(vegan::decostand(local_late[[4]],"pa"), title = "L-matrix model food web")
-
-
-
-# saveRDS(local_late, file="local_late20220502.RData")
-# saveRDS(local_early, file="local_early20220502.RData")
-
-heatweb <- function(mat) {
-  heat <- mat %>% #na_if(., 0) %>% 
-    as.data.frame() %>%
-    rownames_to_column("id") %>%
-    pivot_longer(-c(id), names_to = "species", values_to = "strength") %>%
-    mutate(species= fct_relevel(species,colnames(mat))) %>%
-    ggplot(aes(x=species, y=ordered(id, levels = rev(unique(id))), fill=strength)) + 
-    geom_raster() +
-    #theme_bw() +
-    theme(axis.title.x=element_blank(),
-          axis.text.x=element_blank(),
-          axis.ticks.x=element_blank(),
-          axis.title.y=element_blank(),
-          axis.text.y=element_blank(),
-          axis.ticks.y=element_blank(),
-          legend.position = "none") +
-    #scico::scale_fill_scico(palette = "lajolla")
-    #scale_fill_distiller(palette = "Spectral", direction = -1)
-    scale_fill_viridis_c(option = "inferno", direction = -1)
-  return(heat)
-}
-
-
-bride_of_similarity_filtering <- function (sp.names, metaweb, t = 0, 
-                                           method = "jaccard", stat = "mean", 
-                                           max.iter = 1000) {
-  if (t == 0) 
-    message("Temperature 't' = 0; this is a purely deterministic filtering")
-  isolated <- assembly:::.find_isolated(sp.names, metaweb)
-  if (length(isolated) > 0)
-    stop("Isolated species detected in input")
-  new_sp <- sp.names
-  for (i in seq_len(max.iter)) new_sp <- moov(new_sp, metaweb, 
-                                              t, method, stat)
-  if (length(sp.names) != length(new_sp)) {
-    stop("Number of species changed")
-  }
-  isolated <- assembly:::.find_isolated(new_sp, metaweb)
-  print(isolated)
-  # if (length(isolated) > 0) 
-  #   stop("Isolated species detected in output")
-  if (assembly:::.components(new_sp, metaweb) > 1) 
-    warning("Isolated component detected in output")
-  return(new_sp)
-}
-
-
-moov <- function (sp.names, metaweb, t = 0, method = "jaccard", stat = "mean") 
-{
-  g <- graph_from_adjacency_matrix(metaweb[sp.names, sp.names])
-  consumers <- intersect(sp.names, assembly:::.consumers(metaweb))
-  simil <- similarity(g, vids = which(sp.names %in% consumers), 
-                      method = method, mode = "all")
-  diag(simil) <- NA
-  prob_removed <- apply(simil, MARGIN = 2, stat, na.rm = TRUE)
-  
-  while(TRUE) { 
-    remove <- sample(consumers, size = 1, prob = prob_removed)
-    repl <- assembly:::.find_replacements(sp.names, remove, metaweb, keep.n.basal = TRUE)
-    new.sp <- union(setdiff(sp.names, remove), repl)
-    if(assembly:::.components(new.sp, metaweb)==1 &
-       length(assembly:::.find_isolated(new.sp, metaweb)) == 0 ) break()
-  }
-  #  if (length(.find_isolated(new.sp, metaweb) > 0)) 
-  #    return(sp.names)
-  new.g <- graph_from_adjacency_matrix(metaweb[new.sp, new.sp])
-  consumers <- intersect(new.sp, assembly:::.consumers(metaweb))
-  new.simil <- similarity(new.g, vids = which(new.sp %in% 
-                                                consumers), method = method, mode = "all")
-  diag(new.simil) <- NA
-  if (stat == "mean") {
-    simil <- mean(simil, na.rm = TRUE)
-    new.simil <- mean(new.simil, na.rm = TRUE)
-  }
-  else if (stat == "sum") {
-    simil <- sum(simil, na.rm = TRUE)
-    new.simil <- sum(new.simil, na.rm = TRUE)
-  }
-  else {
-    stop("'stat' must be one of c('mean', 'sum')")
-  }
-  if (assembly::metropolis.hastings(simil, new.simil, t = t)) {
-    return(new.sp)
-  }
-  else {
-    return(sp.names)
-  }
-}
