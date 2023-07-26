@@ -385,7 +385,7 @@ ggdraw(cow_pres +
 ) 
 
 
-ggsave("Figure4.png",
+ggsave("Figure3.pdf",
        bg = "white",
        scale = 1.9,
        width = 180,

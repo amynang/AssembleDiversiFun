@@ -108,13 +108,15 @@ pn = ggplot(comp, aes(x=scenario,
   theme(  plot.title = element_text(size = 12, hjust = 0.5),
           axis.title.x = element_text(size = 10),
           axis.title.y = element_text(size = 10),
-          axis.text.y = element_text(size = 10),
+          axis.text.y = element_blank(),#element_text(size = 10),
+          axis.line.y = element_blank(),
           legend.position = "none",
           plot.margin = unit(c(5.5, 6*5.5, 5.5, 5.5), "pt")) +
   labs(y = "Niche gradient", 
        x = "") +
   coord_flip()+
-  scale_fill_manual(values=c("#36622C","#DAC051"))
+  scale_fill_manual(values=c("#36622C","#DAC051")) +
+  theme_tufte()
 theme_modern()$plot.margin
 
 set.seed(321)
@@ -322,11 +324,11 @@ plot.regional <- function(species = 100) {
                                                  end = .8),
                                     3*species/4, replace = F)),
                     colour = "black",
-                    size = 5,
+                    size = 4,
                     shape = 21,
                     stroke = .5) +
     scale_edge_colour_manual(values=c("#7F7659","#B99B76")) +
-    coord_fixed() + 
+    coord_fixed(clip = "off") + 
     theme(legend.position = 'none') +
     theme_graph(background = "white")
   
@@ -366,7 +368,8 @@ local.fw <- function(producers = 8, consumers = 30) {
                     shape = 21,
                     stroke = .5) + 
     theme(legend.position = 'none') +
-    theme_graph(background = "white")# + coord_fixed()
+    theme_graph(background = "white") + 
+    coord_fixed(clip = "off")
   return(p)
   
 }

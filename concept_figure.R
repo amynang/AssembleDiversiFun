@@ -659,7 +659,7 @@ plot_grid(lr,b,NULL,
            size = 10, 
            fontface = "plain")
 
-ggsave("Figure1.png",
+ggsave("Figure1.pdf",
        bg="white",
        scale = 4,
        width = 173,

@@ -10,7 +10,6 @@ library(grid)
 library(ggthemes)
 set.seed(321)
 
-#properties = readRDS("properties_20220810_N_40_comp_40000qfixed.RData")
 properties = readRDS("properties_2-16.RData")
 properties$animal.competition = rep(rep(c("high","low"), each = 3), 4500)
 properties$plant.competition = rep(rep(c("high inter",
@@ -385,7 +384,7 @@ ggdraw(cow_pres +
        ) 
 
 
-ggsave("Figure2.png",
+ggsave("Figure2.pdf",
        bg = "white",
        scale = 1.9,
        width = 180,

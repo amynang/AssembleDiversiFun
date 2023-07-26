@@ -47,7 +47,7 @@ reg.loc = readRDS("reg.loc_2-16.RData")
 # the subsequent elements contain five objects each:
 
 # the first one is a local foodweb that is a random subset of the regional
-# with 2 to 16 producers and 60 consumers
+# with 2 to 16 producers and 40 consumers
 # consumers must have a resource and all producers have at least one consumer
 # also, we want the subset to comprise a single foodweb (no isolated components)
 # these are our "early succession" foodwebs

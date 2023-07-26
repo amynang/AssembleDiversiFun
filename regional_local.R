@@ -134,7 +134,7 @@ reg.loc[[1]][[2]] = masses
 # the subsequent elements will also contain two objects each:
 
 # the first one is a local foodweb that is a random subset of the regional
-# with 2, 4, 8 or 16 producers and 60 consumers
+# with 2-16 producers and 40 consumers
 # consumers must have a resource and all producers have at least one consumer
 # also, we want the subset to comprise a single foodweb (no isolated components)
 # these will be our "early succession" foodwebs
