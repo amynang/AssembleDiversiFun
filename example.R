@@ -16,6 +16,11 @@ L <- create_Lmatrix(masses,
                     gamma = 2, 
                     th = 0.01)
 diag(L) = 0
+
+N  <-  5e+05                               # the number of random values to replace
+inds <- round ( runif(N, 1, length(L)) )   # draw random values from [1, length(L)]
+L[inds] <- 0                               # use the random values as indicies to L, for which to replace
+
 colnames(L) = c(paste0("broducer",sprintf("%04d", 1:n_basal)),
                 paste0("consumer",sprintf("%04d", 1:(n_species-n_basal)))
 )
@@ -129,3 +134,57 @@ similarity.jaccard(graph_from_adjacency_matrix(local_fws[[1]][3:62,3:62])) %>%
 similarity.jaccard(graph_from_adjacency_matrix(late_succession[[1]][3:62,3:62])) %>% 
   na_if(., 0) %>% 
   mean(na.rm = T)
+
+
+
+
+
+
+
+
+swap <- function (sp.names, metaweb, t = 0, method = "jaccard") 
+{
+  isolated <- .find_isolated(sp.names, metaweb)
+  if (length(isolated) > 0) 
+    stop("Isolated species detected in input")
+  g <- graph_from_adjacency_matrix(metaweb[sp.names, sp.names])
+  consumers <- intersect(sp.names, .consumers(metaweb))
+  simil <- similarity(g, vids = which(sp.names %in% consumers), 
+                      method = method)
+  diag(simil) <- NA
+  simil <- colMeans(simil, na.rm = TRUE)
+  remove <- sample(consumers, size = 1, prob = simil)
+  repl <- .find_replacements(sp.names, remove, metaweb, keep.n.basal = TRUE)
+  new.sp <- union(setdiff(sp.names, remove), repl)
+  if (length(.find_isolated(new.sp, metaweb) > 0)) 
+    return(sp.names)
+  new.g <- graph_from_adjacency_matrix(metaweb[new.sp, new.sp])
+  consumers <- intersect(new.sp, .consumers(metaweb))
+  new.simil <- similarity(new.g, vids = which(new.sp %in% 
+                                                consumers), method = method)
+  diag(new.simil) <- NA
+  new.simil <- colMeans(new.simil, na.rm = TRUE)
+  if (metropolis.hastings(sum(simil), sum(new.simil), t = t)) {
+    return(new.sp)
+  }
+  else {
+    return(sp.names)
+  }
+}
+
+function (sp.names, metaweb, t = 0, method = "jaccard", max.iter = 1000) 
+{
+  new_sp <- sp.names
+  for (i in seq_len(max.iter)) new_sp <- .move(new_sp, metaweb, 
+                                               t = t)
+  if (length(sp.names) != length(new_sp)) {
+    stop("Number of species changed")
+  }
+  if (.components(new_sp, metaweb) > 1) 
+    stop("Isolated component detected")
+  return(new_sp)
+}
+
+
+
+
