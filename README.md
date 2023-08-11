@@ -7,5 +7,5 @@ accepted for publication in Functional Ecology.
 `results.R` extracts the properties of interest from the simulations
 `concept_figure.R`, `figurePrimProd.R`, `figureHerbPres.R` and `figureHerbCont.R` produce Figures 1, 2, 3, 4
 
-
+This repository is archived in Zenodo https://doi.org/10.5281/zenodo.8238367
 
